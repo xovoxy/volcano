@@ -19,8 +19,8 @@ package jobp
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,8 +28,8 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("PG E2E Test: Test PG controller", func() {
-	It("Create volcano rc, pg controller process", func() {
+var _ = ginkgo.Describe("PG E2E Test: Test PG controller", func() {
+	ginkgo.It("Create volcano rc, pg controller process", func() {
 		rcName := "rc-volcano"
 		podName := "pod-volcano"
 		label := map[string]string{"schedulerName": "volcano"}
@@ -73,17 +73,17 @@ var _ = Describe("PG E2E Test: Test PG controller", func() {
 		}
 
 		_, err := ctx.Kubeclient.CoreV1().ReplicationControllers(ctx.Namespace).Create(context.TODO(), rc, v1.CreateOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitPodPhase(ctx, pod, []corev1.PodPhase{corev1.PodRunning})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		ready, err := e2eutil.PodGroupIsReady(ctx, ctx.Namespace)
-		Expect(ready).Should(Equal(true))
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(ready).Should(gomega.Equal(true))
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	It("Create default-scheduler rc, pg controller don't process", func() {
+	ginkgo.It("Create default-scheduler rc, pg controller don't process", func() {
 		rcName := "rc-default-scheduler"
 		podName := "pod-default-scheduler"
 		label := map[string]string{"a": "b"}
@@ -126,13 +126,13 @@ var _ = Describe("PG E2E Test: Test PG controller", func() {
 		}
 
 		_, err := ctx.Kubeclient.CoreV1().ReplicationControllers(ctx.Namespace).Create(context.TODO(), rc, v1.CreateOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitPodPhase(ctx, pod, []corev1.PodPhase{corev1.PodRunning})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		ready, err := e2eutil.PodGroupIsReady(ctx, ctx.Namespace)
-		Expect(ready).Should(Equal(false))
-		Expect(err.Error()).Should(Equal("pod group not found"))
+		gomega.Expect(ready).Should(gomega.Equal(false))
+		gomega.Expect(err.Error()).Should(gomega.Equal("pod group not found"))
 	})
 })

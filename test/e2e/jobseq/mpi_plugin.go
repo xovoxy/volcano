@@ -17,15 +17,15 @@ limitations under the License.
 package jobseq
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	vcbatch "volcano.sh/apis/pkg/apis/batch/v1alpha1"
 	vcbus "volcano.sh/apis/pkg/apis/bus/v1alpha1"
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("MPI Plugin E2E Test", func() {
-	It("will run and complete finally", func() {
+var _ = ginkgo.Describe("MPI Plugin E2E Test", func() {
+	ginkgo.It("will run and complete finally", func() {
 		context := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(context)
 
@@ -70,6 +70,6 @@ mpiexec --allow-run-as-root --host ${MPI_HOST} -np 2 mpi_hello_world > /home/re`
 		job := e2eutil.CreateJob(context, spec)
 		err := e2eutil.WaitJobPhases(context, job, []vcbatch.JobPhase{
 			vcbatch.Pending, vcbatch.Running, vcbatch.Completing, vcbatch.Completed})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 })

@@ -19,8 +19,8 @@ package schedulingbase
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -31,8 +31,8 @@ const (
 	jobWaitingTime = "sla-waiting-time"
 )
 
-var _ = Describe("SLA Test", func() {
-	It("sla permits job to be inqueue", func() {
+var _ = ginkgo.Describe("SLA Test", func() {
+	ginkgo.It("sla permits job to be inqueue", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
@@ -57,10 +57,10 @@ var _ = Describe("SLA Test", func() {
 		job.Name = "j1-overlarge"
 		overlargeJob := e2eutil.CreateJobWithPodGroup(ctx, job, "", annotations)
 		err := e2eutil.WaitTaskPhase(ctx, overlargeJob, []v1.PodPhase{v1.PodPending}, int(rep*2))
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	It("sla adjusts job order", func() {
+	ginkgo.It("sla adjusts job order", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
@@ -93,25 +93,25 @@ var _ = Describe("SLA Test", func() {
 		job1.Name = "j1-overlarge"
 		overlargeJob := e2eutil.CreateJobWithPodGroup(ctx, job1, "", map[string]string{jobWaitingTime: "3s"})
 		err := e2eutil.WaitTaskPhase(ctx, overlargeJob, []v1.PodPhase{v1.PodPending}, int(rep*2))
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		job2.Name = "j2-slow-sla"
 		slowSLAJob := e2eutil.CreateJobWithPodGroup(ctx, job2, "", map[string]string{jobWaitingTime: "1h"})
 		err = e2eutil.WaitTaskPhase(ctx, slowSLAJob, []v1.PodPhase{v1.PodPending}, 0)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		job2.Name = "j3-fast-sla"
 		fastSLAJob := e2eutil.CreateJobWithPodGroup(ctx, job2, "", map[string]string{jobWaitingTime: "30m"})
 		err = e2eutil.WaitTaskPhase(ctx, fastSLAJob, []v1.PodPhase{v1.PodPending}, 0)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = ctx.Vcclient.BatchV1alpha1().Jobs(e2eutil.Namespace(ctx, job1)).Delete(context.TODO(), job1.Name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitTaskPhase(ctx, slowSLAJob, []v1.PodPhase{v1.PodPending}, 0)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitTasksReady(ctx, fastSLAJob, int(rep))
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 })

@@ -22,8 +22,8 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -38,8 +38,8 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Job E2E Test", func() {
-	It("Schedule Job", func() {
+var _ = ginkgo.Describe("Job E2E Test", func() {
+	ginkgo.It("Schedule Job", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 		rep := e2eutil.ClusterSize(ctx, e2eutil.OneCPU)
@@ -57,10 +57,10 @@ var _ = Describe("Job E2E Test", func() {
 		})
 
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	It("Schedule Multiple Jobs", func() {
+	ginkgo.It("Schedule Multiple Jobs", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
@@ -85,23 +85,23 @@ var _ = Describe("Job E2E Test", func() {
 		job3 := e2eutil.CreateJob(ctx, job)
 
 		err := e2eutil.WaitJobReady(ctx, job1)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobReady(ctx, job2)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobReady(ctx, job3)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	It("Gang scheduling", func() {
+	ginkgo.It("Gang scheduling", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 		rep := e2eutil.ClusterSize(ctx, e2eutil.OneCPU)/2 + 1
 
 		replicaset := e2eutil.CreateReplicaSet(ctx, "rs-1", rep, e2eutil.DefaultNginxImage, e2eutil.OneCPU)
 		err := e2eutil.WaitReplicaSetReady(ctx, replicaset.Name)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		jobSpec := &e2eutil.JobSpec{
 			Name:      "gang-qj",
@@ -119,19 +119,19 @@ var _ = Describe("Job E2E Test", func() {
 
 		job := e2eutil.CreateJob(ctx, jobSpec)
 		err = e2eutil.WaitJobStatePending(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobUnschedulable(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.DeleteReplicaSet(ctx, replicaset.Name)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	It("Gang scheduling: Full Occupied", func() {
+	ginkgo.It("Gang scheduling: Full Occupied", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 		rep := e2eutil.ClusterSize(ctx, e2eutil.OneCPU)
@@ -151,18 +151,18 @@ var _ = Describe("Job E2E Test", func() {
 		job.Name = "gang-fq-qj1"
 		job1 := e2eutil.CreateJob(ctx, job)
 		err := e2eutil.WaitJobReady(ctx, job1)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		job.Name = "gang-fq-qj2"
 		job2 := e2eutil.CreateJob(ctx, job)
 		err = e2eutil.WaitJobStatePending(ctx, job2)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobReady(ctx, job1)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	It("Gang scheduling: Contains both best-effort pod and non-best-effort pod", func() {
+	ginkgo.It("Gang scheduling: Contains both best-effort pod and non-best-effort pod", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 		rep := e2eutil.ClusterSize(ctx, e2eutil.OneCPU)
@@ -194,10 +194,10 @@ var _ = Describe("Job E2E Test", func() {
 
 		job := e2eutil.CreateJob(ctx, jobSpec)
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	It("Schedule BestEffort Job", func() {
+	ginkgo.It("Schedule BestEffort Job", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
@@ -224,10 +224,10 @@ var _ = Describe("Job E2E Test", func() {
 		job := e2eutil.CreateJob(ctx, spec)
 
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	It("Statement", func() {
+	ginkgo.It("Statement", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
@@ -249,28 +249,28 @@ var _ = Describe("Job E2E Test", func() {
 		spec.Name = "st-qj-1"
 		job1 := e2eutil.CreateJob(ctx, spec)
 		err := e2eutil.WaitJobReady(ctx, job1)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		now := time.Now()
 
 		spec.Name = "st-qj-2"
 		job2 := e2eutil.CreateJob(ctx, spec)
 		err = e2eutil.WaitJobUnschedulable(ctx, job2)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// No preemption event
 		evicted, err := e2eutil.JobEvicted(ctx, job1, now)()
-		Expect(err).NotTo(HaveOccurred())
-		Expect(evicted).NotTo(BeTrue())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(evicted).NotTo(gomega.BeTrue())
 	})
 
-	It("support binpack policy", func() {
+	ginkgo.It("support binpack policy", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
 		slot := e2eutil.OneCPU
 
-		By("create base job")
+		ginkgo.By("create base job")
 		spec := &e2eutil.JobSpec{
 			Name:      "binpack-base-1",
 			Namespace: ctx.Namespace,
@@ -286,17 +286,17 @@ var _ = Describe("Job E2E Test", func() {
 
 		baseJob := e2eutil.CreateJob(ctx, spec)
 		err := e2eutil.WaitJobReady(ctx, baseJob)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		basePods := e2eutil.GetTasksOfJob(ctx, baseJob)
 		basePod := basePods[0]
 		baseNodeName := basePod.Spec.NodeName
 
 		node, err := ctx.Kubeclient.CoreV1().Nodes().Get(context.TODO(), baseNodeName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		clusterPods, err := ctx.Kubeclient.CoreV1().Pods(v1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		alloc := schedulingapi.NewResource(node.Status.Allocatable)
 		for _, pod := range clusterPods.Items {
@@ -322,7 +322,7 @@ var _ = Describe("Job E2E Test", func() {
 			alloc.Sub(need)
 		}
 
-		By(fmt.Sprintf("create test job with %d pods", count))
+		ginkgo.By(fmt.Sprintf("create test job with %d pods", count))
 		spec = &e2eutil.JobSpec{
 			Name:      "binpack-test-1",
 			Namespace: ctx.Namespace,
@@ -337,17 +337,17 @@ var _ = Describe("Job E2E Test", func() {
 		}
 		job := e2eutil.CreateJob(ctx, spec)
 		err = e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		pods := e2eutil.GetTasksOfJob(ctx, baseJob)
 		for _, pod := range pods {
 			nodeName := pod.Spec.NodeName
-			Expect(nodeName).Should(Equal(baseNodeName),
+			gomega.Expect(nodeName).Should(gomega.Equal(baseNodeName),
 				fmt.Sprintf("Pod %s/%s should assign to node %s, but not %s", pod.Namespace, pod.Name, baseNodeName, nodeName))
 		}
 	})
 
-	It("Schedule v1.Job type using Volcano scheduler", func() {
+	ginkgo.It("Schedule v1.Job type using Volcano scheduler", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 		parallel := int32(2)
@@ -376,13 +376,13 @@ var _ = Describe("Job E2E Test", func() {
 
 		//create job
 		job, err := ctx.Kubeclient.BatchV1().Jobs(ctx.Namespace).Create(context.TODO(), job, metav1.CreateOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobPhaseReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	It("Schedule v1.Job type using Volcano scheduler with error case", func() {
+	ginkgo.It("Schedule v1.Job type using Volcano scheduler with error case", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 		parallel := int32(2)
@@ -432,18 +432,18 @@ var _ = Describe("Job E2E Test", func() {
 
 		//create error job
 		_, err := ctx.Kubeclient.BatchV1().Jobs(ctx.Namespace).Create(context.TODO(), errorJob, metav1.CreateOptions{})
-		Expect(err).To(HaveOccurred())
+		gomega.Expect(err).To(gomega.HaveOccurred())
 
 		//create job
 		job, err = ctx.Kubeclient.BatchV1().Jobs(ctx.Namespace).Create(context.TODO(), job, metav1.CreateOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobPhaseReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	It("Queue Fair Share", func() {
-		Skip("Failed when add yaml, test case may fail in some condition")
+	ginkgo.It("Queue Fair Share", func() {
+		ginkgo.Skip("Failed when add yaml, test case may fail in some condition")
 		q1, q2 := "q1", "q2"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{
 			Queues: []string{q1, q2},
@@ -472,37 +472,35 @@ var _ = Describe("Job E2E Test", func() {
 			return job
 		}
 
-		By("occupy all cluster resources")
+		ginkgo.By("occupy all cluster resources")
 		occupiedJob := createJobToQueue("default", 123, rep*2)
 		err := e2eutil.WaitJobReady(ctx, occupiedJob)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		for i := 0; i < int(rep); i++ {
 			createJobToQueue(q1, i, 2)
 			createJobToQueue(q2, i, 2)
 		}
 
-		By(fmt.Sprintf("release occupied cluster resources, %s/%s", occupiedJob.Namespace, occupiedJob.Name))
+		ginkgo.By(fmt.Sprintf("release occupied cluster resources, %s/%s", occupiedJob.Namespace, occupiedJob.Name))
 		deleteForeground := metav1.DeletePropagationBackground
 		err = ctx.Vcclient.BatchV1alpha1().Jobs(occupiedJob.Namespace).Delete(context.TODO(),
 			occupiedJob.Name,
 			metav1.DeleteOptions{
 				PropagationPolicy: &deleteForeground,
 			})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		By("wait occupied cluster resources releasing")
+		ginkgo.By("wait occupied cluster resources releasing")
 		err = e2eutil.WaitJobCleanedUp(ctx, occupiedJob)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		By("wait pod in queue q1/q2 scheduled")
+		ginkgo.By("wait pod in queue q1/q2 scheduled")
 		q1ScheduledPod := 0
 		q2ScheduledPod := 0
 		expectPod := int(rep)
-		if expectPod%1 == 1 {
-			expectPod--
-		}
-		err = wait.Poll(100*time.Millisecond, e2eutil.FiveMinute, func() (bool, error) {
+
+		err = wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, e2eutil.FiveMinute, false, func(_ context.Context) (bool, error) {
 			q1ScheduledPod = 0
 			q2ScheduledPod = 0
 
@@ -529,69 +527,69 @@ var _ = Describe("Job E2E Test", func() {
 
 			return false, nil
 		})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(q2ScheduledPod).Should(BeNumerically(">=", expectPod/2-1),
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(q2ScheduledPod).Should(gomega.BeNumerically(">=", expectPod/2-1),
 			fmt.Sprintf("expectPod %d, q1ScheduledPod %d, q2ScheduledPod %d", expectPod, q1ScheduledPod, q2ScheduledPod))
 
-		Expect(q2ScheduledPod).Should(BeNumerically("<=", expectPod/2+1),
+		gomega.Expect(q2ScheduledPod).Should(gomega.BeNumerically("<=", expectPod/2+1),
 			fmt.Sprintf("expectPod %d, q1ScheduledPod %d, q2ScheduledPod %d", expectPod, q1ScheduledPod, q2ScheduledPod))
 	})
 
-	It("PodGroup's Count change with Deployment's Request change", func() {
+	ginkgo.It("PodGroup's Count change with Deployment's Request change", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 		rep := e2eutil.ClusterSize(ctx, e2eutil.OneCPU)/2 + 1
 
 		d := e2eutil.CreateDeployment(ctx, "d-1", rep, e2eutil.DefaultNginxImage, e2eutil.OneCPU)
 		err := e2eutil.WaitDeploymentReady(ctx, d.Name)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		pgs, err := ctx.Vcclient.SchedulingV1beta1().PodGroups(ctx.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list podGroups in namespace %s", ctx.Namespace)
-		Expect(len(pgs.Items)).To(Equal(1), "this test need a clean cluster")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list podGroups in namespace %s", ctx.Namespace)
+		gomega.Expect(len(pgs.Items)).To(gomega.Equal(1), "this test need a clean cluster")
 		oldOne := &pgs.Items[0]
 
 		d.ResourceVersion = ""
 		d.Spec.Template.Spec.Containers[0].Resources.Requests = e2eutil.HalfCPU
 		d, err = ctx.Kubeclient.AppsV1().Deployments(ctx.Namespace).Update(context.TODO(), d, metav1.UpdateOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to update deployment(%s) in namespace %s", d.Name, ctx.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to update deployment(%s) in namespace %s", d.Name, ctx.Namespace)
 		err = e2eutil.WaitDeploymentReady(ctx, d.Name)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(_ context.Context) (bool, error) {
 			oldOne, err = ctx.Vcclient.SchedulingV1beta1().PodGroups(ctx.Namespace).Get(context.TODO(), oldOne.Name, metav1.GetOptions{})
 			if err != nil {
 				return true, nil
 			}
 			return false, nil
 		})
-		Expect(errors.IsNotFound(err)).To(BeTrue(), "old pg(%s) should not found", oldOne.Name)
+		gomega.Expect(errors.IsNotFound(err)).To(gomega.BeTrue(), "old pg(%s) should not found", oldOne.Name)
 
 		pgs, err = ctx.Vcclient.SchedulingV1beta1().PodGroups(ctx.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list podGroups in namespace %s", ctx.Namespace)
-		Expect(len(pgs.Items)).To(Equal(1), "only one podGroup should be exists")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list podGroups in namespace %s", ctx.Namespace)
+		gomega.Expect(len(pgs.Items)).To(gomega.Equal(1), "only one podGroup should be exists")
 	})
 
-	It("PodGroup's Phase with k8s Job in Completed", func() {
+	ginkgo.It("PodGroup's Phase with k8s Job in Completed", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
 		jb := e2eutil.CreateSampleK8sJob(ctx, "job1", e2eutil.DefaultNginxImage, e2eutil.OneCPU)
 		err := e2eutil.Waitk8sJobCompleted(ctx, jb.Name)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		var pgPhase vcscheduling.PodGroupPhase
-		wait.Poll(time.Second, time.Second*30, func() (bool, error) {
+		wait.PollUntilContextTimeout(context.Background(), time.Second, time.Second*30, false, func(_ context.Context) (bool, error) {
 			pgs, err := ctx.Vcclient.SchedulingV1beta1().PodGroups(ctx.Namespace).List(context.TODO(), metav1.ListOptions{})
-			Expect(err).NotTo(HaveOccurred(), "failed to list podGroups in namespace %s", ctx.Namespace)
-			Expect(len(pgs.Items)).To(Equal(1), "this test need a clean cluster")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list podGroups in namespace %s", ctx.Namespace)
+			gomega.Expect(len(pgs.Items)).To(gomega.Equal(1), "this test need a clean cluster")
 			pgPhase = pgs.Items[0].Status.Phase
 			if pgPhase != vcscheduling.PodGroupRunning {
 				return true, nil
 			}
 			return false, nil
 		})
-		Expect(pgPhase).To(Equal(vcscheduling.PodGroupCompleted), "podGroup Phase is %s, should be %s",
+		gomega.Expect(pgPhase).To(gomega.Equal(vcscheduling.PodGroupCompleted), "podGroup Phase is %s, should be %s",
 			ctx.Namespace, vcscheduling.PodGroupCompleted)
 	})
 })

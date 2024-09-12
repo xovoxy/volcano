@@ -21,8 +21,8 @@ import (
 	"context"
 	"fmt"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -34,8 +34,8 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Job E2E Test: Test Job Command", func() {
-	It("List running jobs", func() {
+var _ = ginkgo.Describe("Job E2E Test: Test Job Command", func() {
+	ginkgo.It("List running jobs", func() {
 		var outBuffer bytes.Buffer
 		jobName := "test-job"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
@@ -56,20 +56,20 @@ var _ = Describe("Job E2E Test: Test Job Command", func() {
 		})
 		// Pod is running
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		// Job Status is running
 		err = e2eutil.WaitJobStateReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		// Command outputs are identical
 		outputs := ListJobs(ctx.Namespace)
 		jobs, err := ctx.Vcclient.BatchV1alpha1().Jobs(ctx.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		jobcli.PrintJobs(jobs, &outBuffer)
-		Expect(outputs).To(Equal(outBuffer.String()), "List command result should be:\n %s",
+		gomega.Expect(outputs).To(gomega.Equal(outBuffer.String()), "List command result should be:\n %s",
 			outBuffer.String())
 	})
 
-	It("Suspend running job&Resume aborted job", func() {
+	ginkgo.It("Suspend running job&Resume aborted job", func() {
 		jobName := "test-suspend-running-job"
 		taskName := "long-live-task"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
@@ -89,32 +89,32 @@ var _ = Describe("Job E2E Test: Test Job Command", func() {
 		})
 		// Job is running
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		err = e2eutil.WaitJobStateReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// Suspend job and wait status change
 		SuspendJob(jobName, ctx.Namespace)
 		err = e2eutil.WaitJobStateAborted(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// Pod is gone
 		podName := jobctl.MakePodName(jobName, taskName, 0)
 		err = e2eutil.WaitPodGone(ctx, podName, job.Namespace)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// Resume job
 		ResumeJob(jobName, ctx.Namespace)
 
 		// Job is running again
 		err = e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		err = e2eutil.WaitJobStateReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	})
 
-	It("Suspend pending job", func() {
+	ginkgo.It("Suspend pending job", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 		rep := e2eutil.ClusterSize(ctx, e2eutil.OneCPU)
@@ -138,23 +138,23 @@ var _ = Describe("Job E2E Test: Test Job Command", func() {
 
 		// Job is pending
 		err := e2eutil.WaitJobPending(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		err = e2eutil.WaitJobStatePending(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// Suspend job and wait status change
 		SuspendJob(jobName, ctx.Namespace)
 		err = e2eutil.WaitJobStateAborted(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// Pod is gone
 		podName := jobctl.MakePodName(jobName, taskName, 0)
 		_, err = ctx.Kubeclient.CoreV1().Pods(ctx.Namespace).Get(context.TODO(), podName, metav1.GetOptions{})
-		Expect(apierrors.IsNotFound(err)).To(BeTrue(),
+		gomega.Expect(apierrors.IsNotFound(err)).To(gomega.BeTrue(),
 			"Job related pod should be deleted when job aborted.")
 	})
 
-	It("delete a job with all nodes taints", func() {
+	ginkgo.It("delete a job with all nodes taints", func() {
 
 		jobName := "test-del-job"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
@@ -170,7 +170,7 @@ var _ = Describe("Job E2E Test: Test Job Command", func() {
 		}
 
 		err := e2eutil.TaintAllNodes(ctx, taints)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Namespace: ctx.Namespace,
@@ -186,26 +186,26 @@ var _ = Describe("Job E2E Test: Test Job Command", func() {
 		})
 
 		err = e2eutil.WaitJobPending(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.RemoveTaintsFromAllNodes(ctx, taints)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// Pod is running
 		err = e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		// Job Status is running
 		err = e2eutil.WaitJobStateReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		_, err = ctx.Vcclient.BatchV1alpha1().Jobs(ctx.Namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// Delete job
 		DeleteJob(jobName, ctx.Namespace)
 
 		_, err = ctx.Vcclient.BatchV1alpha1().Jobs(ctx.Namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
-		Expect(apierrors.IsNotFound(err)).To(BeTrue(),
+		gomega.Expect(apierrors.IsNotFound(err)).To(gomega.BeTrue(),
 			"Job should be deleted on vcctl job delete.")
 	})
 })

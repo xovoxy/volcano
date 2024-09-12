@@ -25,7 +25,6 @@ import (
 	"github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -322,7 +321,7 @@ var _ = ginkgo.Describe("Job E2E Test", func() {
 					Req:      slot1,
 					Min:      2,
 					Rep:      2,
-					SchGates: []v1.PodSchedulingGate{{Name: "example.com/g1"}},
+					SchGates: []corev1.PodSchedulingGate{{Name: "example.com/g1"}},
 				},
 			},
 		}
@@ -356,11 +355,11 @@ var _ = ginkgo.Describe("Job E2E Test", func() {
 			corev1.ResourceCPU:    resource.MustParse("2000m"),
 			corev1.ResourceMemory: resource.MustParse("2048Mi")}
 
-		dep := e2eutil.CreateDeploymentGated(ctx, "dep-gated", 4, e2eutil.DefaultNginxImage, slot1, []v1.PodSchedulingGate{{Name: "g1"}})
+		dep := e2eutil.CreateDeploymentGated(ctx, "dep-gated", 4, e2eutil.DefaultNginxImage, slot1, []corev1.PodSchedulingGate{{Name: "g1"}})
 
 		// need to wait for podgroup to be created
 		var pg *schedulingv1beta1.PodGroup
-		err := wait.Poll(time.Second, time.Minute, func() (bool, error) {
+		err := wait.PollUntilContextTimeout(context.Background(), time.Second, time.Minute, false, func(_ context.Context) (bool, error) {
 			pgList, err := ctx.Vcclient.SchedulingV1beta1().PodGroups(ctx.Namespace).List(context.TODO(), metav1.ListOptions{})
 			if len(pgList.Items) == 1 {
 				pg = &pgList.Items[0]

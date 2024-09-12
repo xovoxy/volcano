@@ -19,8 +19,8 @@ package jobp
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,12 +31,12 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Job Life Cycle", func() {
-	It("Delete job that is pending state", func() {
+var _ = ginkgo.Describe("Job Life Cycle", func() {
+	ginkgo.It("Delete job that is pending state", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("create job")
+		ginkgo.By("create job")
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name: "pending-delete-job",
 			Tasks: []e2eutil.TaskSpec{
@@ -52,22 +52,22 @@ var _ = Describe("Job Life Cycle", func() {
 
 		// job phase: pending
 		err := e2eutil.WaitJobPhases(ctx, job, []vcbatch.JobPhase{vcbatch.Pending})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		By("delete job")
+		ginkgo.By("delete job")
 		err = ctx.Vcclient.BatchV1alpha1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobCleanedUp(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	})
 
-	It("Delete job that is Running state", func() {
+	ginkgo.It("Delete job that is Running state", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("create job")
+		ginkgo.By("create job")
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name: "running-delete-job",
 			Tasks: []e2eutil.TaskSpec{
@@ -82,22 +82,22 @@ var _ = Describe("Job Life Cycle", func() {
 
 		// job phase: pending -> running
 		err := e2eutil.WaitJobPhases(ctx, job, []vcbatch.JobPhase{vcbatch.Pending, vcbatch.Running})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		By("delete job")
+		ginkgo.By("delete job")
 		err = ctx.Vcclient.BatchV1alpha1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobCleanedUp(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	})
 
-	It("Delete job that is Completed state", func() {
+	ginkgo.It("Delete job that is Completed state", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("create job")
+		ginkgo.By("create job")
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name: "complete-delete-job",
 			Tasks: []e2eutil.TaskSpec{
@@ -114,22 +114,22 @@ var _ = Describe("Job Life Cycle", func() {
 
 		// job phase: pending -> running -> Completed
 		err := e2eutil.WaitJobPhases(ctx, job, []vcbatch.JobPhase{vcbatch.Pending, vcbatch.Running, vcbatch.Completed})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		By("delete job")
+		ginkgo.By("delete job")
 		err = ctx.Vcclient.BatchV1alpha1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobCleanedUp(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	})
 
-	It("Delete job that is Failed job", func() {
+	ginkgo.It("Delete job that is Failed job", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("create job")
+		ginkgo.By("create job")
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name: "failed-delete-job",
 			Policies: []vcbatch.LifecyclePolicy{
@@ -152,22 +152,22 @@ var _ = Describe("Job Life Cycle", func() {
 
 		// job phase: pending -> running -> Aborted
 		err := e2eutil.WaitJobPhases(ctx, job, []vcbatch.JobPhase{vcbatch.Pending, vcbatch.Running, vcbatch.Aborted})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		By("delete job")
+		ginkgo.By("delete job")
 		err = ctx.Vcclient.BatchV1alpha1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobCleanedUp(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	})
 
-	It("Delete job that is terminated job", func() {
+	ginkgo.It("Delete job that is terminated job", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("create job")
+		ginkgo.By("create job")
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name: "terminate-delete-job",
 			Policies: []vcbatch.LifecyclePolicy{
@@ -190,22 +190,22 @@ var _ = Describe("Job Life Cycle", func() {
 
 		// job phase: pending -> running -> Terminated
 		err := e2eutil.WaitJobPhases(ctx, job, []vcbatch.JobPhase{vcbatch.Pending, vcbatch.Running, vcbatch.Terminated})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		By("delete job")
+		ginkgo.By("delete job")
 		err = ctx.Vcclient.BatchV1alpha1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobCleanedUp(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	})
 
-	It("Create and Delete job with CPU requirement", func() {
+	ginkgo.It("Create and Delete job with CPU requirement", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("create job")
+		ginkgo.By("create job")
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name: "terminate-delete-job",
 			Policies: []vcbatch.LifecyclePolicy{
@@ -229,18 +229,18 @@ var _ = Describe("Job Life Cycle", func() {
 
 		// job phase: pending -> running -> completed
 		err := e2eutil.WaitJobPhases(ctx, job, []vcbatch.JobPhase{vcbatch.Pending, vcbatch.Running, vcbatch.Completed})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		By("delete job")
+		ginkgo.By("delete job")
 		err = ctx.Vcclient.BatchV1alpha1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobCleanedUp(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	})
 
-	It("Checking Event Generation for job", func() {
+	ginkgo.It("Checking Event Generation for job", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
@@ -265,10 +265,10 @@ var _ = Describe("Job Life Cycle", func() {
 		})
 
 		err := e2eutil.WaitJobTerminateAction(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
-	It("Checking Unschedulable Event Generation for job", func() {
+	ginkgo.It("Checking Unschedulable Event Generation for job", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
@@ -314,7 +314,7 @@ var _ = Describe("Job Life Cycle", func() {
 		})
 
 		err := e2eutil.WaitJobUnschedulable(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
 })

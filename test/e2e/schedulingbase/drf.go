@@ -17,15 +17,15 @@ limitations under the License.
 package schedulingbase
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("DRF Test", func() {
-	It("drf works", func() {
-		Skip("Failed when add yaml, test case may fail in some condition")
+var _ = ginkgo.Describe("DRF Test", func() {
+	ginkgo.It("drf works", func() {
+		ginkgo.Skip("Failed when add yaml, test case may fail in some condition")
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
@@ -46,7 +46,7 @@ var _ = Describe("DRF Test", func() {
 		job.Name = "j1-reference"
 		referenceJob := e2eutil.CreateJob(ctx, job)
 		err := e2eutil.WaitTasksReady(ctx, referenceJob, int(rep))
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// tasks in j2-drf request half of the cluster resource
 		// each replicas request 0.5 CPU
@@ -55,6 +55,6 @@ var _ = Describe("DRF Test", func() {
 		job.Tasks[0].Req = e2eutil.HalfCPU
 		backfillJob := e2eutil.CreateJob(ctx, job)
 		err = e2eutil.WaitTasksReady(ctx, backfillJob, int(rep))
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 })

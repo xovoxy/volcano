@@ -1,17 +1,17 @@
 package jobseq
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	vcbatch "volcano.sh/apis/pkg/apis/batch/v1alpha1"
 	vcbus "volcano.sh/apis/pkg/apis/bus/v1alpha1"
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Pytorch Plugin E2E Test", func() {
-	It("will run and complete finally", func() {
+var _ = ginkgo.Describe("Pytorch Plugin E2E Test", func() {
+	ginkgo.It("will run and complete finally", func() {
 		// Community CI can skip this use case, and enable this use case verification when releasing the version.
-		Skip("Pytorch's test image download fails probabilistically, causing the current use case to fail. ")
+		ginkgo.Skip("Pytorch's test image download fails probabilistically, causing the current use case to fail. ")
 		context := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(context)
 
@@ -55,6 +55,6 @@ var _ = Describe("Pytorch Plugin E2E Test", func() {
 		job := e2eutil.CreateJob(context, spec)
 		err := e2eutil.WaitJobPhases(context, job, []vcbatch.JobPhase{
 			vcbatch.Pending, vcbatch.Running, vcbatch.Completed})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 })

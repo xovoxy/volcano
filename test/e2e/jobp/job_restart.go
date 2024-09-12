@@ -19,8 +19,8 @@ package jobp
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	vcbatch "volcano.sh/apis/pkg/apis/batch/v1alpha1"
@@ -30,13 +30,13 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Test job restart", func() {
-	It("Retain failed pod on last Retry", func() {
+var _ = ginkgo.Describe("Test job restart", func() {
+	ginkgo.It("Retain failed pod on last Retry", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
 		jobName := "last-retry-job"
-		By("create job")
+		ginkgo.By("create job")
 		var minSuccess int32 = 2
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name:       jobName,
@@ -71,29 +71,29 @@ var _ = Describe("Test job restart", func() {
 
 		// wait job failed
 		err := e2eutil.WaitJobStates(ctx, job, []vcbatch.JobPhase{vcbatch.Failed}, e2eutil.FiveMinute)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// check job restart count
 		curjob, err := e2eutil.VcClient.BatchV1alpha1().Jobs(job.Namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(curjob.Status.RetryCount).Should(Equal(int32(2)))
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(curjob.Status.RetryCount).Should(gomega.Equal(int32(2)))
 
 		// wait running pod deleted
 		err = e2eutil.WaitPodGone(ctx, jobctl.MakePodName(jobName, "running-task", 0), job.Namespace)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// failed pod should be existing
 		pod, err := e2eutil.KubeClient.CoreV1().Pods(job.Namespace).Get(context.TODO(), jobctl.MakePodName(jobName, "failed-task", 0), metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(pod.DeletionTimestamp).Should(BeNil())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(pod.DeletionTimestamp).Should(gomega.BeNil())
 	})
 
-	It("Retain succeeded pod when job complete", func() {
+	ginkgo.It("Retain succeeded pod when job complete", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
 		jobName := "complete-retry-job"
-		By("create job")
+		ginkgo.By("create job")
 		var minSuccess int32 = 2
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name:       jobName,
@@ -131,20 +131,20 @@ var _ = Describe("Test job restart", func() {
 
 		// wait job failed
 		err := e2eutil.WaitJobStates(ctx, job, []vcbatch.JobPhase{vcbatch.Completed}, e2eutil.FiveMinute)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// check job restart count
 		curjob, err := e2eutil.VcClient.BatchV1alpha1().Jobs(job.Namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(curjob.Status.RetryCount).Should(Equal(int32(0)))
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(curjob.Status.RetryCount).Should(gomega.Equal(int32(0)))
 
 		// wait running pod deleted
 		err = e2eutil.WaitPodGone(ctx, jobctl.MakePodName(jobName, "running-task", 0), job.Namespace)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// succeeded pod should be existing
 		pod, err := e2eutil.KubeClient.CoreV1().Pods(job.Namespace).Get(context.TODO(), jobctl.MakePodName(jobName, "succeeded-task", 0), metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
-		Expect(pod.DeletionTimestamp).Should(BeNil())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		gomega.Expect(pod.DeletionTimestamp).Should(gomega.BeNil())
 	})
 })

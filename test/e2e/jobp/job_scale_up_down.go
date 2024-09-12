@@ -20,8 +20,8 @@ import (
 	"context"
 	"fmt"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -30,13 +30,13 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Dynamic Job scale up and down", func() {
-	It("Scale up", func() {
+var _ = ginkgo.Describe("Dynamic Job scale up and down", func() {
+	ginkgo.It("Scale up", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
 		jobName := "scale-up-job"
-		By("create job")
+		ginkgo.By("create job")
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name: jobName,
 			Plugins: map[string][]string{
@@ -55,44 +55,44 @@ var _ = Describe("Dynamic Job scale up and down", func() {
 
 		// job phase: pending -> running
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// scale up
 		job.Spec.MinAvailable = 4
 		job.Spec.Tasks[0].Replicas = 4
 		err = e2eutil.UpdateJob(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// wait for tasks scaled up
 		err = e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// check configmap updated
 		pluginName := fmt.Sprintf("%s-svc", jobName)
 		cm, err := ctx.Kubeclient.CoreV1().ConfigMaps(ctx.Namespace).Get(context.TODO(),
 			pluginName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		hosts := svc.GenerateHosts(job)
-		Expect(hosts).To(Equal(cm.Data))
+		gomega.Expect(hosts).To(gomega.Equal(cm.Data))
 
 		// TODO: check others
 
-		By("delete job")
+		ginkgo.By("delete job")
 		err = ctx.Vcclient.BatchV1alpha1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobCleanedUp(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	})
 
-	It("Scale down", func() {
+	ginkgo.It("Scale down", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
 		jobName := "scale-down-job"
-		By("create job")
+		ginkgo.By("create job")
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name: jobName,
 			Plugins: map[string][]string{
@@ -111,7 +111,7 @@ var _ = Describe("Dynamic Job scale up and down", func() {
 
 		// job phase: pending -> running
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// scale down
 		var taskMinAvailable int32 = 1
@@ -119,38 +119,38 @@ var _ = Describe("Dynamic Job scale up and down", func() {
 		job.Spec.Tasks[0].Replicas = 1
 		job.Spec.Tasks[0].MinAvailable = &taskMinAvailable
 		err = e2eutil.UpdateJob(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// wait for tasks scaled up
 		err = e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// check configmap updated
 		pluginName := fmt.Sprintf("%s-svc", jobName)
 		cm, err := ctx.Kubeclient.CoreV1().ConfigMaps(ctx.Namespace).Get(context.TODO(),
 			pluginName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		hosts := svc.GenerateHosts(job)
-		Expect(hosts).To(Equal(cm.Data))
+		gomega.Expect(hosts).To(gomega.Equal(cm.Data))
 
 		// TODO: check others
 
-		By("delete job")
+		ginkgo.By("delete job")
 		err = ctx.Vcclient.BatchV1alpha1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobCleanedUp(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	})
 
-	It("Scale down to zero and scale up", func() {
+	ginkgo.It("Scale down to zero and scale up", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
 		jobName := "scale-down-job"
-		By("create job")
+		ginkgo.By("create job")
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name: jobName,
 			Plugins: map[string][]string{
@@ -169,7 +169,7 @@ var _ = Describe("Dynamic Job scale up and down", func() {
 
 		// job phase: pending -> running
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// scale down
 		var taskMinAvailable int32 = 0
@@ -177,46 +177,46 @@ var _ = Describe("Dynamic Job scale up and down", func() {
 		job.Spec.Tasks[0].Replicas = 0
 		job.Spec.Tasks[0].MinAvailable = &taskMinAvailable
 		err = e2eutil.UpdateJob(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// wait for tasks scaled up
 		err = e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// check configmap updated
 		pluginName := fmt.Sprintf("%s-svc", jobName)
 		cm, err := ctx.Kubeclient.CoreV1().ConfigMaps(ctx.Namespace).Get(context.TODO(),
 			pluginName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		hosts := svc.GenerateHosts(job)
-		Expect(hosts).To(Equal(cm.Data))
+		gomega.Expect(hosts).To(gomega.Equal(cm.Data))
 
 		// scale up
 		job.Spec.MinAvailable = 2
 		job.Spec.Tasks[0].Replicas = 2
 		err = e2eutil.UpdateJob(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// wait for tasks scaled up
 		err = e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// check configmap updated
 		cm, err = ctx.Kubeclient.CoreV1().ConfigMaps(ctx.Namespace).Get(context.TODO(),
 			pluginName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		hosts = svc.GenerateHosts(job)
-		Expect(hosts).To(Equal(cm.Data))
+		gomega.Expect(hosts).To(gomega.Equal(cm.Data))
 
 		// TODO: check others
 
-		By("delete job")
+		ginkgo.By("delete job")
 		err = ctx.Vcclient.BatchV1alpha1().Jobs(job.Namespace).Delete(context.TODO(), job.Name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobCleanedUp(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 })

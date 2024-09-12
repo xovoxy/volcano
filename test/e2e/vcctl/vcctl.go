@@ -20,13 +20,13 @@ import (
 	"os"
 	"strings"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 )
 
-var _ = Describe("Test Help option of vcctl cli", func() {
+var _ = ginkgo.Describe("Test Help option of vcctl cli", func() {
 
-	It("Command: vcctl --help", func() {
+	ginkgo.It("Command: vcctl --help", func() {
 		var output = `
 Usage:
   vcctl [command]
@@ -52,10 +52,10 @@ Use "vcctl [command] --help" for more information about a command.
 		command := []string{"--help"}
 		cmdOutput := RunCliCommandWithoutKubeConfig(command)
 		exist := strings.Contains(output, cmdOutput)
-		Expect(exist).Should(Equal(true))
+		gomega.Expect(exist).Should(gomega.Equal(true))
 	})
 
-	It("Command: vcctl job --help", func() {
+	ginkgo.It("Command: vcctl job --help", func() {
 		var output = `
 vcctl command line operation job
 
@@ -84,10 +84,10 @@ Use "vcctl job [command] --help" for more information about a command.
 		command := []string{"job", "--help"}
 		cmdOutput := RunCliCommandWithoutKubeConfig(command)
 		exist := strings.Contains(output, cmdOutput)
-		Expect(exist).Should(Equal(true))
+		gomega.Expect(exist).Should(gomega.Equal(true))
 	})
 
-	It("Command: vcctl job list --help", func() {
+	ginkgo.It("Command: vcctl job list --help", func() {
 		kubeConfig := os.Getenv("KUBECONFIG")
 		var output = `
 list job information
@@ -114,10 +114,10 @@ Global Flags:
 		command := []string{"job", "list", "--help"}
 		cmdOutput := RunCliCommandWithoutKubeConfig(command)
 		exist := strings.Contains(output, cmdOutput)
-		Expect(exist).Should(Equal(true))
+		gomega.Expect(exist).Should(gomega.Equal(true))
 	})
 
-	It("Command: vcctl job suspend -n {$JobName} --help", func() {
+	ginkgo.It("Command: vcctl job suspend -n {$JobName} --help", func() {
 		kubeConfig := os.Getenv("KUBECONFIG")
 		var output = `
 abort a job
@@ -141,10 +141,10 @@ Global Flags:
 		command := []string{"job", "suspend", "-n", "job1", "--help"}
 		cmdOutput := RunCliCommandWithoutKubeConfig(command)
 		exist := strings.Contains(output, cmdOutput)
-		Expect(exist).Should(Equal(true))
+		gomega.Expect(exist).Should(gomega.Equal(true))
 	})
 
-	It("vcctl job resume -n {$JobName} --help", func() {
+	ginkgo.It("vcctl job resume -n {$JobName} --help", func() {
 		kubeConfig := os.Getenv("KUBECONFIG")
 		var output = `
 resume a job
@@ -168,10 +168,10 @@ Global Flags:
 		command := []string{"job", "resume", "-n", "job1", "--help"}
 		cmdOutput := RunCliCommandWithoutKubeConfig(command)
 		exist := strings.Contains(output, cmdOutput)
-		Expect(exist).Should(Equal(true))
+		gomega.Expect(exist).Should(gomega.Equal(true))
 	})
 
-	It("vcctl job run --help", func() {
+	ginkgo.It("vcctl job run --help", func() {
 		kubeConfig := os.Getenv("KUBECONFIG")
 		var output = `
 run job by parameters from the command line
@@ -202,7 +202,7 @@ Global Flags:
 		command := []string{"job", "run", "--help"}
 		cmdOutput := RunCliCommandWithoutKubeConfig(command)
 		exist := strings.Contains(output, cmdOutput)
-		Expect(exist).Should(Equal(true))
+		gomega.Expect(exist).Should(gomega.Equal(true))
 	})
 
 })

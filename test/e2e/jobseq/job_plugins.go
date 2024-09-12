@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"strings"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 
 	cv1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,8 +35,8 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Job E2E Test: Test Job Plugins", func() {
-	It("Test SVC Plugin with Node Affinity", func() {
+var _ = ginkgo.Describe("Job E2E Test: Test Job Plugins", func() {
+	ginkgo.It("Test SVC Plugin with Node Affinity", func() {
 		jobName := "job-with-svc-plugin"
 		taskName := "task"
 		foundVolume := false
@@ -44,7 +44,7 @@ var _ = Describe("Job E2E Test: Test Job Plugins", func() {
 		defer e2eutil.CleanupTestContext(ctx)
 
 		nodeName, rep := e2eutil.ComputeNode(ctx, e2eutil.OneCPU)
-		Expect(rep).NotTo(Equal(0))
+		gomega.Expect(rep).NotTo(gomega.Equal(0))
 
 		affinity := &cv1.Affinity{
 			NodeAffinity: &cv1.NodeAffinity{
@@ -83,31 +83,31 @@ var _ = Describe("Job E2E Test: Test Job Plugins", func() {
 		})
 
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		pluginName := fmt.Sprintf("%s-svc", jobName)
 		_, err = ctx.Kubeclient.CoreV1().ConfigMaps(ctx.Namespace).Get(context.TODO(),
 			pluginName, v1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		pod, err := ctx.Kubeclient.CoreV1().Pods(ctx.Namespace).Get(context.TODO(),
 			fmt.Sprintf(helpers.PodNameFmt, jobName, taskName, 0), v1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		for _, volume := range pod.Spec.Volumes {
 			if volume.Name == pluginName {
 				foundVolume = true
 				break
 			}
 		}
-		Expect(foundVolume).To(BeTrue())
+		gomega.Expect(foundVolume).To(gomega.BeTrue())
 
 		pods := e2eutil.GetTasksOfJob(ctx, job)
 		for _, pod := range pods {
-			Expect(pod.Spec.NodeName).To(Equal(nodeName))
+			gomega.Expect(pod.Spec.NodeName).To(gomega.Equal(nodeName))
 		}
 	})
 
-	It("Test SSh Plugin with Pod Affinity", func() {
+	ginkgo.It("Test SSh Plugin with Pod Affinity", func() {
 		jobName := "job-with-ssh-plugin"
 		taskName := "task"
 		foundVolume := false
@@ -115,7 +115,7 @@ var _ = Describe("Job E2E Test: Test Job Plugins", func() {
 		defer e2eutil.CleanupTestContext(ctx)
 
 		_, rep := e2eutil.ComputeNode(ctx, e2eutil.OneCPU)
-		Expect(rep).NotTo(Equal(0))
+		gomega.Expect(rep).NotTo(gomega.Equal(0))
 
 		labels := map[string]string{"foo": "bar"}
 
@@ -152,40 +152,40 @@ var _ = Describe("Job E2E Test: Test Job Plugins", func() {
 		})
 
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		secretName := genSSHSecretName(job)
 		_, err = ctx.Kubeclient.CoreV1().Secrets(ctx.Namespace).Get(context.TODO(),
 			secretName, v1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		pod, err := ctx.Kubeclient.CoreV1().Pods(ctx.Namespace).Get(context.TODO(),
 			fmt.Sprintf(helpers.PodNameFmt, jobName, taskName, 0), v1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		for _, volume := range pod.Spec.Volumes {
 			if volume.Name == secretName {
 				foundVolume = true
 				break
 			}
 		}
-		Expect(foundVolume).To(BeTrue())
+		gomega.Expect(foundVolume).To(gomega.BeTrue())
 
 		pods := e2eutil.GetTasksOfJob(ctx, job)
 		// All pods should be scheduled to the same node.
 		nodeName := pods[0].Spec.NodeName
 		for _, pod := range pods {
-			Expect(pod.Spec.NodeName).To(Equal(nodeName))
+			gomega.Expect(pod.Spec.NodeName).To(gomega.Equal(nodeName))
 		}
 	})
 
-	It("Test SVC Plugin with disableNetworkPolicy", func() {
+	ginkgo.It("Test SVC Plugin with disableNetworkPolicy", func() {
 		jobName := "svc-with-disable-network-policy"
 		taskName := "task"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
 		_, rep := e2eutil.ComputeNode(ctx, e2eutil.OneCPU)
-		Expect(rep).NotTo(Equal(0))
+		gomega.Expect(rep).NotTo(gomega.Equal(0))
 
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Namespace: ctx.Namespace,
@@ -205,16 +205,16 @@ var _ = Describe("Job E2E Test: Test Job Plugins", func() {
 		})
 
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// Check whether network policy is created with job name
 		networkPolicyName := jobName
 		_, err = ctx.Kubeclient.NetworkingV1().NetworkPolicies(ctx.Namespace).Get(context.TODO(), networkPolicyName, v1.GetOptions{})
 		// Error will occur because there is no policy should be created
-		Expect(err).To(HaveOccurred())
+		gomega.Expect(err).To(gomega.HaveOccurred())
 	})
 
-	It("Check Functionality of all plugins", func() {
+	ginkgo.It("Check Functionality of all plugins", func() {
 		jobName := "job-with-all-plugin"
 		taskName := "task"
 		foundVolume := false
@@ -223,7 +223,7 @@ var _ = Describe("Job E2E Test: Test Job Plugins", func() {
 		defer e2eutil.CleanupTestContext(ctx)
 
 		_, rep := e2eutil.ComputeNode(ctx, e2eutil.OneCPU)
-		Expect(rep).NotTo(Equal(0))
+		gomega.Expect(rep).NotTo(gomega.Equal(0))
 
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Namespace: ctx.Namespace,
@@ -245,23 +245,23 @@ var _ = Describe("Job E2E Test: Test Job Plugins", func() {
 		})
 
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		secretName := genSSHSecretName(job)
 		_, err = ctx.Kubeclient.CoreV1().Secrets(ctx.Namespace).Get(context.TODO(),
 			secretName, v1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		pod, err := ctx.Kubeclient.CoreV1().Pods(ctx.Namespace).Get(context.TODO(),
 			fmt.Sprintf(helpers.PodNameFmt, jobName, taskName, 0), v1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		for _, volume := range pod.Spec.Volumes {
 			if volume.Name == secretName {
 				foundVolume = true
 				break
 			}
 		}
-		Expect(foundVolume).To(BeTrue())
+		gomega.Expect(foundVolume).To(gomega.BeTrue())
 
 		// Check whether env exists in the containers and initContainers
 		containers := pod.Spec.Containers
@@ -283,14 +283,14 @@ var _ = Describe("Job E2E Test: Test Job Plugins", func() {
 					}
 				}
 
-				Expect(foundEnv).To(BeTrue(),
+				gomega.Expect(foundEnv).To(gomega.BeTrue(),
 					fmt.Sprintf("container: %s, env name: %s", container.Name, name))
 			}
 		}
 
 		// Check whether service is created with job name
 		_, err = ctx.Kubeclient.CoreV1().Services(job.Namespace).Get(context.TODO(), job.Name, v1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 })
 

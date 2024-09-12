@@ -19,8 +19,8 @@ package jobp
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	v12 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,10 +30,10 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Job E2E Test: Test Job PVCs", func() {
-	It("use exisisting PVC in job", func() {
+var _ = ginkgo.Describe("Job E2E Test: Test Job PVCs", func() {
+	ginkgo.It("use exisisting PVC in job", func() {
 		// PVC related e2e verification fails probabilistically, See issue: #3102
-		Skip("PVC related e2e verification fails probabilistically, See issue: #3102")
+		ginkgo.Skip("PVC related e2e verification fails probabilistically, See issue: #3102")
 		jobName := "job-pvc-name-exist"
 		taskName := "pvctask"
 		pvName := "job-pv-name"
@@ -66,7 +66,7 @@ var _ = Describe("Job E2E Test: Test Job PVCs", func() {
 			},
 		}
 		_, err := ctx.Kubeclient.CoreV1().PersistentVolumes().Create(context.TODO(), &pv, metav1.CreateOptions{})
-		Expect(err).NotTo(HaveOccurred(), "pv creation ")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "pv creation ")
 		// create pvc
 		pvc := v12.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
@@ -87,7 +87,7 @@ var _ = Describe("Job E2E Test: Test Job PVCs", func() {
 			},
 		}
 		_, err1 := ctx.Kubeclient.CoreV1().PersistentVolumeClaims(ctx.Namespace).Create(context.TODO(), &pvc, metav1.CreateOptions{})
-		Expect(err1).NotTo(HaveOccurred(), "pvc creation")
+		gomega.Expect(err1).NotTo(gomega.HaveOccurred(), "pvc creation")
 
 		pvSpec := &v12.PersistentVolumeClaimSpec{
 			Resources: v12.VolumeResourceRequirements{
@@ -124,20 +124,20 @@ var _ = Describe("Job E2E Test: Test Job PVCs", func() {
 		})
 
 		err = e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		job, err = ctx.Vcclient.BatchV1alpha1().Jobs(ctx.Namespace).Get(context.TODO(), jobName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		Expect(len(job.Spec.Volumes)).To(Equal(2),
+		gomega.Expect(len(job.Spec.Volumes)).To(gomega.Equal(2),
 			" volume should be created")
-		Expect(job.Spec.Volumes[0].VolumeClaimName).Should(Equal(pvcName),
+		gomega.Expect(job.Spec.Volumes[0].VolumeClaimName).Should(gomega.Equal(pvcName),
 			"volume 1 PVC name should not be generated .")
-		Expect(job.Spec.Volumes[1].VolumeClaimName).Should(Not(Equal("")),
+		gomega.Expect(job.Spec.Volumes[1].VolumeClaimName).Should(gomega.Not(gomega.Equal("")),
 			"volume 0 PVC name should be generated.")
 	})
 
-	It("Generate PodGroup and valid minResource when creating job", func() {
+	ginkgo.It("Generate PodGroup and valid minResource when creating job", func() {
 		jobName := "job-name-podgroup"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
@@ -185,17 +185,17 @@ var _ = Describe("Job E2E Test: Test Job PVCs", func() {
 		}
 
 		err := e2eutil.WaitJobStatePending(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		pgName := jobName + "-" + string(job.UID)
 		pGroup, err := ctx.Vcclient.SchedulingV1beta1().PodGroups(ctx.Namespace).Get(context.TODO(), pgName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		minReq := *pGroup.Spec.MinResources
 		for name, q := range expected {
 			value, ok := minReq[v12.ResourceName(name)]
-			Expect(ok).To(Equal(true), "Resource %s should exists in PodGroup", name)
-			Expect(q).To(Equal(value.Value()), "Resource %s 's value should equal to %d", name, value)
+			gomega.Expect(ok).To(gomega.Equal(true), "Resource %s should exists in PodGroup", name)
+			gomega.Expect(q).To(gomega.Equal(value.Value()), "Resource %s 's value should equal to %d", name, value)
 		}
 	})
 })

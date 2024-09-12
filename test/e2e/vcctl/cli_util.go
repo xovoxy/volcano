@@ -21,7 +21,7 @@ import (
 	"os/exec"
 	"strings"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
@@ -29,7 +29,7 @@ import (
 // ResumeJob resumes the job in the given namespace.
 func ResumeJob(name string, namespace string) string {
 	command := []string{"job", "resume"}
-	Expect(name).NotTo(Equal(""), "Job name should not be empty in Resume job command")
+	gomega.Expect(name).NotTo(gomega.Equal(""), "Job name should not be empty in Resume job command")
 	command = append(command, "--name", name)
 	if namespace != "" {
 		command = append(command, "--namespace", namespace)
@@ -40,7 +40,7 @@ func ResumeJob(name string, namespace string) string {
 // SuspendJob suspends the job in the given namespace.
 func SuspendJob(name string, namespace string) string {
 	command := []string{"job", "suspend"}
-	Expect(name).NotTo(Equal(""), "Job name should not be empty in Suspend job command")
+	gomega.Expect(name).NotTo(gomega.Equal(""), "Job name should not be empty in Suspend job command")
 	command = append(command, "--name", name)
 	if namespace != "" {
 		command = append(command, "--namespace", namespace)
@@ -60,7 +60,7 @@ func ListJobs(namespace string) string {
 // DeleteJob delete the job in the given namespace.
 func DeleteJob(name string, namespace string) string {
 	command := []string{"job", "delete"}
-	Expect(name).NotTo(Equal(""), "Job name should not be empty in delete job command")
+	gomega.Expect(name).NotTo(gomega.Equal(""), "Job name should not be empty in delete job command")
 	command = append(command, "--name", name)
 	if namespace != "" {
 		command = append(command, "--namespace", namespace)
@@ -75,10 +75,10 @@ func RunCliCommand(command []string) string {
 	}
 	command = append(command, "--kubeconfig", e2eutil.KubeconfigPath(e2eutil.HomeDir()))
 	vcctl := e2eutil.VolcanoCliBinary()
-	Expect(e2eutil.FileExist(vcctl)).To(BeTrue(), fmt.Sprintf(
+	gomega.Expect(e2eutil.FileExist(vcctl)).To(gomega.BeTrue(), fmt.Sprintf(
 		"vcctl binary: %s is required for E2E tests, please update VC_BIN environment", vcctl))
 	output, err := exec.Command(vcctl, command...).Output()
-	Expect(err).NotTo(HaveOccurred(),
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(),
 		fmt.Sprintf("Command %s failed to execute: %s", strings.Join(command, ""), err))
 	return string(output)
 }
@@ -89,10 +89,10 @@ func RunCliCommandWithoutKubeConfig(command []string) string {
 		command = append(command, "--master", e2eutil.MasterURL())
 	}
 	vcctl := e2eutil.VolcanoCliBinary()
-	Expect(e2eutil.FileExist(vcctl)).To(BeTrue(), fmt.Sprintf(
+	gomega.Expect(e2eutil.FileExist(vcctl)).To(gomega.BeTrue(), fmt.Sprintf(
 		"vcctl binary: %s is required for E2E tests, please update VC_BIN environment", vcctl))
 	output, err := exec.Command(vcctl, command...).Output()
-	Expect(err).NotTo(HaveOccurred(),
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(),
 		fmt.Sprintf("Command %s failed to execute: %s", strings.Join(command, ""), err))
 	return string(output)
 }

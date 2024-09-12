@@ -19,8 +19,8 @@ package jobseq
 import (
 	"context"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,8 +31,8 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("TensorFlow Plugin E2E Test", func() {
-	It("Will Start in pending state and goes through other phases to get complete phase", func() {
+var _ = ginkgo.Describe("TensorFlow Plugin E2E Test", func() {
+	ginkgo.It("Will Start in pending state and goes through other phases to get complete phase", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
@@ -118,10 +118,10 @@ var _ = Describe("TensorFlow Plugin E2E Test", func() {
 		}
 
 		created, err := ctx.Vcclient.BatchV1alpha1().Jobs(ctx.Namespace).Create(context.TODO(), job, metav1.CreateOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitJobStates(ctx, created, []vcbatch.JobPhase{vcbatch.Pending, vcbatch.Running, vcbatch.Completed}, e2eutil.FiveMinute)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 
 })

@@ -17,20 +17,20 @@
 package jobp
 
 import (
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	vcbatch "volcano.sh/apis/pkg/apis/batch/v1alpha1"
 
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Check min success", func() {
-	It("Min Success", func() {
+var _ = ginkgo.Describe("Check min success", func() {
+	ginkgo.It("Min Success", func() {
 		ctx := e2eutil.InitTestContext(e2eutil.Options{})
 		defer e2eutil.CleanupTestContext(ctx)
 
 		jobName := "min-success-job"
-		By("create job")
+		ginkgo.By("create job")
 		var minSuccess int32 = 2
 		job := e2eutil.CreateJob(ctx, &e2eutil.JobSpec{
 			Name:       jobName,
@@ -55,14 +55,14 @@ var _ = Describe("Check min success", func() {
 
 		// job phase: pending -> running
 		err := e2eutil.WaitJobReady(ctx, job)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// wait short tasks completed
 		err = e2eutil.WaitTasksCompleted(ctx, job, minSuccess)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// wait job completed
 		err = e2eutil.WaitJobStates(ctx, job, []vcbatch.JobPhase{vcbatch.Completed}, e2eutil.OneMinute)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 })
