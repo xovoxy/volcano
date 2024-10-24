@@ -25,11 +25,10 @@ import (
 
 	lagencyerror "errors"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	schedv1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -49,14 +48,14 @@ var (
 	TwoMinute  = 2 * time.Minute
 	FiveMinute = 5 * time.Minute
 	TenMinute  = 10 * time.Minute
-	OneCPU     = v1.ResourceList{"cpu": resource.MustParse("1000m")}
-	TwoCPU     = v1.ResourceList{"cpu": resource.MustParse("2000m")}
-	ThreeCPU   = v1.ResourceList{"cpu": resource.MustParse("3000m")}
-	ThirtyCPU  = v1.ResourceList{"cpu": resource.MustParse("30000m")}
-	HalfCPU    = v1.ResourceList{"cpu": resource.MustParse("500m")}
-	CPU1Mem1   = v1.ResourceList{"cpu": resource.MustParse("1000m"), "memory": resource.MustParse("1024Mi")}
-	CPU2Mem2   = v1.ResourceList{"cpu": resource.MustParse("2000m"), "memory": resource.MustParse("2048Mi")}
-	CPU4Mem4   = v1.ResourceList{"cpu": resource.MustParse("4000m"), "memory": resource.MustParse("4096Mi")}
+	OneCPU     = corev1.ResourceList{"cpu": resource.MustParse("1000m")}
+	TwoCPU     = corev1.ResourceList{"cpu": resource.MustParse("2000m")}
+	ThreeCPU   = corev1.ResourceList{"cpu": resource.MustParse("3000m")}
+	ThirtyCPU  = corev1.ResourceList{"cpu": resource.MustParse("30000m")}
+	HalfCPU    = corev1.ResourceList{"cpu": resource.MustParse("500m")}
+	CPU1Mem1   = corev1.ResourceList{"cpu": resource.MustParse("1000m"), "memory": resource.MustParse("1024Mi")}
+	CPU2Mem2   = corev1.ResourceList{"cpu": resource.MustParse("2000m"), "memory": resource.MustParse("2048Mi")}
+	CPU4Mem4   = corev1.ResourceList{"cpu": resource.MustParse("4000m"), "memory": resource.MustParse("4096Mi")}
 )
 
 const (
@@ -81,8 +80,8 @@ const (
 	DefaultPytorchImage = "volcanosh/pytorch-mnist-v1beta1-9ee8fda-example:0.0.1"
 )
 
-func CPUResource(request string) v1.ResourceList {
-	return v1.ResourceList{v1.ResourceCPU: resource.MustParse(request)}
+func CPUResource(request string) corev1.ResourceList {
+	return corev1.ResourceList{corev1.ResourceCPU: resource.MustParse(request)}
 }
 
 func HomeDir() string {
@@ -120,7 +119,7 @@ type TestContext struct {
 
 	Namespace        string
 	Queues           []string
-	DeservedResource map[string]v1.ResourceList
+	DeservedResource map[string]corev1.ResourceList
 	PriorityClasses  map[string]int32
 	UsingPlaceHolder bool
 }
@@ -128,17 +127,17 @@ type TestContext struct {
 type Options struct {
 	Namespace          string
 	Queues             []string
-	DeservedResource   map[string]v1.ResourceList
+	DeservedResource   map[string]corev1.ResourceList
 	PriorityClasses    map[string]int32
 	NodesNumLimit      int
-	NodesResourceLimit v1.ResourceList
+	NodesResourceLimit corev1.ResourceList
 }
 
 var VcClient *vcclient.Clientset
 var KubeClient *kubernetes.Clientset
 
 func InitTestContext(o Options) *TestContext {
-	By("Initializing test context")
+	ginkgo.By("Initializing test context")
 
 	if o.Namespace == "" {
 		o.Namespace = helpers.GenRandomStr(8)
@@ -154,14 +153,14 @@ func InitTestContext(o Options) *TestContext {
 	}
 
 	_, err := ctx.Kubeclient.CoreV1().Namespaces().Create(context.TODO(),
-		&v1.Namespace{
+		&corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: ctx.Namespace,
 			},
 		},
 		metav1.CreateOptions{},
 	)
-	Expect(err).NotTo(HaveOccurred(), "failed to create namespace")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create namespace")
 
 	CreateQueues(ctx)
 	createPriorityClasses(ctx)
@@ -174,12 +173,12 @@ func InitTestContext(o Options) *TestContext {
 	return ctx
 }
 
-func NamespaceNotExist(ctx *TestContext) wait.ConditionFunc {
+func NamespaceNotExist(ctx *TestContext) wait.ConditionWithContextFunc {
 	return NamespaceNotExistWithName(ctx, ctx.Namespace)
 }
 
-func NamespaceNotExistWithName(ctx *TestContext, name string) wait.ConditionFunc {
-	return func() (bool, error) {
+func NamespaceNotExistWithName(ctx *TestContext, name string) wait.ConditionWithContextFunc {
+	return func(_ context.Context) (bool, error) {
 		_, err := ctx.Kubeclient.CoreV1().Namespaces().Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil && errors.IsNotFound(err) {
 			return true, nil
@@ -198,13 +197,13 @@ func FileExist(name string) bool {
 }
 
 func CleanupTestContext(ctx *TestContext) {
-	By("Cleaning up test context")
+	ginkgo.By("Cleaning up test context")
 
 	foreground := metav1.DeletePropagationForeground
 	err := ctx.Kubeclient.CoreV1().Namespaces().Delete(context.TODO(), ctx.Namespace, metav1.DeleteOptions{
 		PropagationPolicy: &foreground,
 	})
-	Expect(err).NotTo(HaveOccurred(), "failed to delete namespace")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to delete namespace")
 
 	deleteQueues(ctx)
 	deletePriorityClasses(ctx)
@@ -214,8 +213,8 @@ func CleanupTestContext(ctx *TestContext) {
 	}
 
 	// Wait for namespace deleted.
-	err = wait.Poll(100*time.Millisecond, FiveMinute, NamespaceNotExist(ctx))
-	Expect(err).NotTo(HaveOccurred(), "failed to wait for namespace deleted")
+	err = wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, NamespaceNotExist(ctx))
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to wait for namespace deleted")
 }
 
 func createPriorityClasses(cxt *TestContext) {
@@ -229,27 +228,27 @@ func createPriorityClasses(cxt *TestContext) {
 				GlobalDefault: false,
 			},
 			metav1.CreateOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to create priority class: %s", name)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create priority class: %s", name)
 	}
 }
 
 func deletePriorityClasses(cxt *TestContext) {
 	for name := range cxt.PriorityClasses {
 		err := cxt.Kubeclient.SchedulingV1().PriorityClasses().Delete(context.TODO(), name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	}
 }
 
-func setPlaceHolderForSchedulerTesting(ctx *TestContext, req v1.ResourceList, reqNum int) (bool, error) {
+func setPlaceHolderForSchedulerTesting(ctx *TestContext, req corev1.ResourceList, reqNum int) (bool, error) {
 	if !satisfyMinNodesRequirements(ctx, reqNum) {
 		return false, lagencyerror.New("Failed to setup environment, you need to have at least " + strconv.Itoa(reqNum) + " worker node.")
 	}
 
 	nodes, err := ctx.Kubeclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	pods, err := ctx.Kubeclient.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred())
+	gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 	used := map[string]*schedulerapi.Resource{}
 
@@ -259,7 +258,7 @@ func setPlaceHolderForSchedulerTesting(ctx *TestContext, req v1.ResourceList, re
 			continue
 		}
 
-		if pod.Status.Phase == v1.PodSucceeded || pod.Status.Phase == v1.PodFailed {
+		if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
 			continue
 		}
 
@@ -279,7 +278,7 @@ func setPlaceHolderForSchedulerTesting(ctx *TestContext, req v1.ResourceList, re
 	resourceRichNode := 0
 
 	// init placeholders
-	placeHolders := map[string]v1.ResourceList{}
+	placeHolders := map[string]corev1.ResourceList{}
 
 	for _, node := range nodes.Items {
 		if len(node.Spec.Taints) != 0 {
@@ -306,7 +305,7 @@ func setPlaceHolderForSchedulerTesting(ctx *TestContext, req v1.ResourceList, re
 
 		phCPUQuantity := resource.NewMilliQuantity(int64(phCPU), resource.BinarySI)
 		phMemoryQuantity := resource.NewQuantity(int64(phMemory), resource.BinarySI)
-		placeHolders[node.Name] = v1.ResourceList{"cpu": *phCPUQuantity, "memory": *phMemoryQuantity}
+		placeHolders[node.Name] = corev1.ResourceList{"cpu": *phCPUQuantity, "memory": *phMemoryQuantity}
 	}
 
 	if resourceRichNode < reqNum {
@@ -315,13 +314,13 @@ func setPlaceHolderForSchedulerTesting(ctx *TestContext, req v1.ResourceList, re
 
 	for nodeName, res := range placeHolders {
 		err := createPlaceHolder(ctx, res, nodeName)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	}
 
 	return true, nil
 }
 
-func createPlaceHolder(ctx *TestContext, phr v1.ResourceList, nodeName string) error {
+func createPlaceHolder(ctx *TestContext, phr corev1.ResourceList, nodeName string) error {
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      nodeName + "-placeholder",
@@ -353,10 +352,10 @@ func deletePlaceHolder(ctx *TestContext) {
 		LabelSelector: labels.Set(map[string]string{"role": "placeholder"}).String(),
 	}
 	podList, err := ctx.Kubeclient.CoreV1().Pods(ctx.Namespace).List(context.TODO(), listOptions)
-	Expect(err).NotTo(HaveOccurred(), "failed to list pods")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods")
 
 	for _, pod := range podList.Items {
 		err := ctx.Kubeclient.CoreV1().Pods(ctx.Namespace).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to delete pod %s", pod.Name)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to delete pod %s", pod.Name)
 	}
 }

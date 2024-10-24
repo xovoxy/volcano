@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -84,7 +84,7 @@ func Namespace(context *TestContext, job *JobSpec) string {
 
 func CreateJob(context *TestContext, jobSpec *JobSpec) *batchv1alpha1.Job {
 	job, err := CreateJobInner(context, jobSpec)
-	Expect(err).NotTo(HaveOccurred(), "failed to create job %s in namespace %s", jobSpec.Name, jobSpec.Namespace)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create job %s in namespace %s", jobSpec.Name, jobSpec.Namespace)
 	return job
 }
 
@@ -168,7 +168,7 @@ func CreateJobWithPodGroup(ctx *TestContext, jobSpec *JobSpec,
 	job.Spec.Volumes = jobSpec.Volumes
 
 	jobCreated, err := ctx.Vcclient.BatchV1alpha1().Jobs(job.Namespace).Create(context.TODO(), job, metav1.CreateOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to create job %s in namespace %s", job.Name, job.Namespace)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create job %s in namespace %s", job.Name, job.Namespace)
 
 	return jobCreated
 }
@@ -275,9 +275,9 @@ func CreateJobInner(ctx *TestContext, jobSpec *JobSpec) (*batchv1alpha1.Job, err
 
 func WaitTaskPhase(ctx *TestContext, job *batchv1alpha1.Job, phase []v1.PodPhase, taskNum int) error {
 	var additionalError error
-	err := wait.Poll(100*time.Millisecond, FiveMinute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, func(_ context.Context) (bool, error) {
 		pods, err := ctx.Kubeclient.CoreV1().Pods(job.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list pods in namespace %s", job.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods in namespace %s", job.Namespace)
 
 		readyTaskNum := 0
 		for _, pod := range pods.Items {
@@ -308,10 +308,10 @@ func WaitTaskPhase(ctx *TestContext, job *batchv1alpha1.Job, phase []v1.PodPhase
 }
 
 func taskPhaseEx(ctx *TestContext, job *batchv1alpha1.Job, phase []v1.PodPhase, taskNum map[string]int) error {
-	err := wait.Poll(100*time.Millisecond, FiveMinute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, func(_ context.Context) (bool, error) {
 
 		pods, err := ctx.Kubeclient.CoreV1().Pods(job.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list pods in namespace %s", job.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods in namespace %s", job.Namespace)
 
 		readyTaskNum := map[string]int{}
 		for _, pod := range pods.Items {
@@ -345,7 +345,7 @@ func taskPhaseEx(ctx *TestContext, job *batchv1alpha1.Job, phase []v1.PodPhase, 
 func jobUnschedulable(ctx *TestContext, job *batchv1alpha1.Job, now time.Time) error {
 	var additionalError error
 	// TODO(k82cn): check Job's Condition instead of PodGroup's event.
-	err := wait.Poll(10*time.Second, FiveMinute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 10*time.Second, FiveMinute, true, func(_ context.Context) (bool, error) {
 		pgName := job.Name + "-" + string(job.UID)
 		pg, err := ctx.Vcclient.SchedulingV1beta1().PodGroups(job.Namespace).Get(context.TODO(), pgName, metav1.GetOptions{})
 		if err != nil {
@@ -383,10 +383,10 @@ func JobEvicted(ctx *TestContext, job *batchv1alpha1.Job, time time.Time) wait.C
 	return func() (bool, error) {
 		pgName := job.Name + "-" + string(job.UID)
 		pg, err := ctx.Vcclient.SchedulingV1beta1().PodGroups(job.Namespace).Get(context.TODO(), pgName, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to get pod group of job %s in namespace %s", job.Name, job.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to get pod group of job %s in namespace %s", job.Name, job.Namespace)
 
 		events, err := ctx.Kubeclient.CoreV1().Events(pg.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list events in namespace %s", pg.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list events in namespace %s", pg.Namespace)
 
 		for _, event := range events.Items {
 			target := event.InvolvedObject
@@ -532,9 +532,9 @@ func WaitJobStateAborted(ctx *TestContext, job *batchv1alpha1.Job) error {
 // WaitPodPhaseRunningMoreThanNum waits for the number of running pods to be more than specified number
 func WaitPodPhaseRunningMoreThanNum(ctx *TestContext, namespace string, num int) error {
 	var additionalError error
-	err := wait.Poll(100*time.Millisecond, FiveMinute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, func(_ context.Context) (bool, error) {
 		clusterPods, err := ctx.Kubeclient.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list pods in namespace %s", namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods in namespace %s", namespace)
 
 		runningPodNum := 0
 		for _, pod := range clusterPods.Items {
@@ -557,9 +557,9 @@ func WaitPodPhaseRunningMoreThanNum(ctx *TestContext, namespace string, num int)
 
 func waitJobPhaseExpect(ctx *TestContext, job *batchv1alpha1.Job, state batchv1alpha1.JobPhase, waitTime time.Duration) error {
 	var additionalError error
-	err := wait.Poll(100*time.Millisecond, FiveMinute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, func(_ context.Context) (bool, error) {
 		job, err := ctx.Vcclient.BatchV1alpha1().Jobs(job.Namespace).Get(context.TODO(), job.Name, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		expected := job.Status.State.Phase == state
 		if !expected {
 			additionalError = fmt.Errorf("expected job '%s' phase in %s, actual got %s", job.Name,
@@ -576,9 +576,9 @@ func waitJobPhaseExpect(ctx *TestContext, job *batchv1alpha1.Job, state batchv1a
 func WaitJobPhaseReady(ctx *TestContext, job *batchv1.Job) error {
 	var additionalError error
 
-	err := wait.Poll(100*time.Millisecond, FiveMinute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, func(_ context.Context) (bool, error) {
 		job, err := ctx.Kubeclient.BatchV1().Jobs(job.Namespace).Get(context.TODO(), job.Name, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		expected := job.Status.Active > 0
 		if !expected {
 			additionalError = fmt.Errorf("expected job '%s' active pod to be greater than 0, actual got %d", job.Name, job.Status.Active)
@@ -642,7 +642,7 @@ func WaitJobCleanedUp(ctx *TestContext, cleanupjob *batchv1alpha1.Job) error {
 
 	pods := GetTasksOfJob(ctx, cleanupjob)
 
-	err := wait.Poll(100*time.Millisecond, FiveMinute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, func(_ context.Context) (bool, error) {
 		job, err := ctx.Vcclient.BatchV1alpha1().Jobs(cleanupjob.Namespace).Get(context.TODO(), cleanupjob.Name, metav1.GetOptions{})
 		if err != nil && !errors.IsNotFound(err) {
 			return false, nil
@@ -681,7 +681,7 @@ func WaitJobCleanedUp(ctx *TestContext, cleanupjob *batchv1alpha1.Job) error {
 // GetTasksOfJob returns the tasks belongs to the job
 func GetTasksOfJob(ctx *TestContext, job *batchv1alpha1.Job) []*v1.Pod {
 	pods, err := ctx.Kubeclient.CoreV1().Pods(job.Namespace).List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to list pods in namespace %s", job.Namespace)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods in namespace %s", job.Namespace)
 
 	var tasks []*v1.Pod
 
@@ -699,7 +699,7 @@ func GetTasksOfJob(ctx *TestContext, job *batchv1alpha1.Job) []*v1.Pod {
 // WaitPodGone waits the Pod to be deleted when aborting a Job
 func WaitPodGone(ctx *TestContext, podName, namespace string) error {
 	var additionalError error
-	err := wait.Poll(100*time.Millisecond, FiveMinute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, func(_ context.Context) (bool, error) {
 		_, err := ctx.Kubeclient.CoreV1().Pods(namespace).Get(context.TODO(), podName, metav1.GetOptions{})
 		expected := errors.IsNotFound(err)
 		if !expected {
@@ -716,13 +716,13 @@ func WaitPodGone(ctx *TestContext, podName, namespace string) error {
 
 // WaitJobTerminateAction waits for the Job to be terminated
 func WaitJobTerminateAction(ctx *TestContext, pg *batchv1alpha1.Job) error {
-	return wait.Poll(10*time.Second, FiveMinute, jobTerminateAction(ctx, pg, time.Now()))
+	return wait.PollUntilContextTimeout(context.Background(), 10*time.Second, FiveMinute, true, jobTerminateAction(ctx, pg, time.Now()))
 }
 
-func jobTerminateAction(ctx *TestContext, pg *batchv1alpha1.Job, time time.Time) wait.ConditionFunc {
-	return func() (bool, error) {
+func jobTerminateAction(ctx *TestContext, pg *batchv1alpha1.Job, time time.Time) wait.ConditionWithContextFunc {
+	return func(_ context.Context) (bool, error) {
 		events, err := ctx.Kubeclient.CoreV1().Events(pg.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list events in namespace %s", pg.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list events in namespace %s", pg.Namespace)
 
 		for _, event := range events.Items {
 			target := event.InvolvedObject
@@ -740,9 +740,9 @@ func jobTerminateAction(ctx *TestContext, pg *batchv1alpha1.Job, time time.Time)
 // WaitPodPhase waits for the Pod to be the specified phase
 func WaitPodPhase(ctx *TestContext, pod *v1.Pod, phase []v1.PodPhase) error {
 	var additionalError error
-	err := wait.Poll(100*time.Millisecond, FiveMinute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, func(_ context.Context) (bool, error) {
 		pods, err := ctx.Kubeclient.CoreV1().Pods(pod.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list pods in namespace %s", pod.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods in namespace %s", pod.Namespace)
 
 		for _, p := range phase {
 			for _, pod := range pods.Items {
@@ -774,9 +774,9 @@ func IsPodScheduled(pod *v1.Pod) bool {
 // WaitTasksCompleted waits for the tasks of a job to be completed
 func WaitTasksCompleted(ctx *TestContext, job *batchv1alpha1.Job, successNum int32) error {
 	var additionalError error
-	err := wait.Poll(100*time.Millisecond, TwoMinute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, TwoMinute, true, func(_ context.Context) (bool, error) {
 		pods, err := ctx.Kubeclient.CoreV1().Pods(job.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list pods in namespace %s", job.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods in namespace %s", job.Namespace)
 
 		var succeeded int32 = 0
 		for _, pod := range pods.Items {

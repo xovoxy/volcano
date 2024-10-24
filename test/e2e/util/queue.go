@@ -20,8 +20,8 @@ import (
 	"context"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -51,7 +51,7 @@ func CreateQueueWithQueueSpec(ctx *TestContext, queueSpec *QueueSpec) {
 			queue.Spec.Guarantee.Resource = queueSpec.GuaranteeResource
 		}
 		_, err := ctx.Vcclient.SchedulingV1beta1().Queues().Create(context.TODO(), queue, metav1.CreateOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to create queue %s", queueSpec.Name)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create queue %s", queueSpec.Name)
 	}
 
 	// wait for queue state turns to be open
@@ -71,13 +71,13 @@ func CreateQueue(ctx *TestContext, q string, deservedResource v1.ResourceList) {
 				Deserved: deservedResource,
 			},
 		}, metav1.CreateOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to create queue %s", q)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create queue %s", q)
 	}
 }
 
 // CreateQueues create Queues specified in the test context
 func CreateQueues(ctx *TestContext) {
-	By("Creating Queues")
+	ginkgo.By("Creating Queues")
 
 	for _, queue := range ctx.Queues {
 		CreateQueue(ctx, queue, ctx.DeservedResource[queue])
@@ -95,7 +95,7 @@ func DeleteQueue(ctx *TestContext, q string) {
 	retryErr := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		queue, err = ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), q, metav1.GetOptions{})
 		if err != nil {
-			Expect(err).NotTo(HaveOccurred(), "failed to get queue %s", q)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to get queue %s", q)
 			return err
 		}
 		queue.Status.State = schedulingv1beta1.QueueStateClosed
@@ -104,15 +104,15 @@ func DeleteQueue(ctx *TestContext, q string) {
 		}
 		return nil
 	})
-	Expect(retryErr).NotTo(HaveOccurred(), "failed to update status of queue %s", q)
-	err = wait.Poll(100*time.Millisecond, FiveMinute, queueClosed(ctx, q))
-	Expect(err).NotTo(HaveOccurred(), "failed to wait queue %s closed", q)
+	gomega.Expect(retryErr).NotTo(gomega.HaveOccurred(), "failed to update status of queue %s", q)
+	err = wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, queueClosed(ctx, q))
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to wait queue %s closed", q)
 
 	err = ctx.Vcclient.SchedulingV1beta1().Queues().Delete(context.TODO(), q,
 		metav1.DeleteOptions{
 			PropagationPolicy: &foreground,
 		})
-	Expect(err).NotTo(HaveOccurred(), "failed to delete queue %s", q)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to delete queue %s", q)
 }
 
 // deleteQueues deletes Queues specified in the test context
@@ -124,7 +124,7 @@ func deleteQueues(ctx *TestContext) {
 
 // SeyQueueReclaimable sets the Queue to be reclaimable
 func SetQueueReclaimable(ctx *TestContext, queues []string, reclaimable bool) {
-	By("Setting Queue reclaimable")
+	ginkgo.By("Setting Queue reclaimable")
 
 	for _, q := range queues {
 		var queue *schedulingv1beta1.Queue
@@ -132,7 +132,7 @@ func SetQueueReclaimable(ctx *TestContext, queues []string, reclaimable bool) {
 		retryErr := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 			queue, err = ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), q, metav1.GetOptions{})
 			if err != nil {
-				Expect(err).NotTo(HaveOccurred(), "failed to get queue %s", q)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to get queue %s", q)
 				return err
 			}
 			queue.Spec.Reclaimable = &reclaimable
@@ -141,17 +141,17 @@ func SetQueueReclaimable(ctx *TestContext, queues []string, reclaimable bool) {
 			}
 			return nil
 		})
-		Expect(retryErr).NotTo(HaveOccurred(), "failed to update queue %s", q)
+		gomega.Expect(retryErr).NotTo(gomega.HaveOccurred(), "failed to update queue %s", q)
 	}
 }
 
-func WaitQueueStatus(condition func() (bool, error)) error {
-	return wait.Poll(100*time.Millisecond, TenMinute, condition)
+func WaitQueueStatus(condition func(context.Context) (bool, error)) error {
+	return wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, TenMinute, true, condition)
 }
 
 // queueClosed returns whether the Queue is closed
-func queueClosed(ctx *TestContext, name string) wait.ConditionFunc {
-	return func() (bool, error) {
+func queueClosed(ctx *TestContext, name string) wait.ConditionWithContextFunc {
+	return func(_ context.Context) (bool, error) {
 		queue, err := ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil {
 			return false, err

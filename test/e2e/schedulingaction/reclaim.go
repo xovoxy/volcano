@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -35,7 +35,7 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Reclaim E2E Test", func() {
+var _ = ginkgo.Describe("Reclaim E2E Test", func() {
 
 	CreateReclaimJob := func(ctx *e2eutil.TestContext, req v1.ResourceList, name string, queue string, pri string, nodeName string, waitTaskReady bool) (*batchv1alpha1.Job, error) {
 		job := &e2eutil.JobSpec{
@@ -66,9 +66,9 @@ var _ = Describe("Reclaim E2E Test", func() {
 	}
 
 	WaitQueueStatus := func(ctx *e2eutil.TestContext, status string, num int32, queue string) error {
-		err := e2eutil.WaitQueueStatus(func() (bool, error) {
+		err := e2eutil.WaitQueueStatus(func(_ context.Context) (bool, error) {
 			queue, err := ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), queue, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Get queue %s failed", queue)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Get queue %s failed", queue)
 			switch status {
 			case "Running":
 				return queue.Status.Running == num, nil
@@ -85,7 +85,7 @@ var _ = Describe("Reclaim E2E Test", func() {
 		return err
 	}
 
-	It("Reclaim Case 1: New queue with job created no reclaim when resource is enough", func() {
+	ginkgo.It("Reclaim Case 1: New queue with job created no reclaim when resource is enough", func() {
 		q1 := e2eutil.DefaultQueue
 		q2 := "reclaim-q2"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{
@@ -96,40 +96,40 @@ var _ = Describe("Reclaim E2E Test", func() {
 
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("Setup initial jobs")
+		ginkgo.By("Setup initial jobs")
 
 		_, err := CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j1", q1, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job1 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job1 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j2", q2, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job2 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job2 failed")
 
-		By("Create new coming queue and job")
+		ginkgo.By("Create new coming queue and job")
 		q3 := "reclaim-q3"
 		ctx.Queues = append(ctx.Queues, q3)
 		e2eutil.CreateQueues(ctx)
 
 		err = WaitQueueStatus(ctx, "Open", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue open")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue open")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j3", q3, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job3 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job3 failed")
 
-		By("Make sure all job running")
+		ginkgo.By("Make sure all job running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q2)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q3)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 	})
 
-	It("Reclaim Case 3: New queue with job created no reclaim when job.PodGroup.Status.Phase pending", func() {
-		Skip("Occasionally Failed E2E Test Cases for Claim, See issue: #3562")
+	ginkgo.It("Reclaim Case 3: New queue with job created no reclaim when job.PodGroup.Status.Phase pending", func() {
+		ginkgo.Skip("Occasionally Failed E2E Test Cases for Claim, See issue: #3562")
 		q1 := e2eutil.DefaultQueue
 		q2 := "reclaim-q2"
 		j1 := "reclaim-j1"
@@ -148,24 +148,24 @@ var _ = Describe("Reclaim E2E Test", func() {
 
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("Setup initial jobs")
+		ginkgo.By("Setup initial jobs")
 
 		_, err := CreateReclaimJob(ctx, e2eutil.CPU1Mem1, j1, q1, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job1 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job1 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, j2, q2, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job2 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job2 failed")
 
-		By("Create new coming queue and job")
+		ginkgo.By("Create new coming queue and job")
 		q3 := "reclaim-q3"
 		ctx.Queues = append(ctx.Queues, q3)
 		e2eutil.CreateQueues(ctx)
 
 		err = WaitQueueStatus(ctx, "Open", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue open")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue open")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, j3, q3, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job3 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job3 failed")
 
 		// delete pod of job3 to make sure reclaim-j3 podgroup is pending
 		listOptions := metav1.ListOptions{
@@ -173,26 +173,26 @@ var _ = Describe("Reclaim E2E Test", func() {
 		}
 
 		job3pods, err := ctx.Kubeclient.CoreV1().Pods(ctx.Namespace).List(context.TODO(), listOptions)
-		Expect(err).NotTo(HaveOccurred(), "Get %s pod failed", j3)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Get %s pod failed", j3)
 
-		By("Make sure q1 q2 with job running in it.")
+		ginkgo.By("Make sure q1 q2 with job running in it.")
 		err = WaitQueueStatus(ctx, "Running", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q2)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		for _, pod := range job3pods.Items {
 			err = ctx.Kubeclient.CoreV1().Pods(pod.Namespace).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Failed to delete pod %s", pod.Name)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Failed to delete pod %s", pod.Name)
 		}
 
-		By("Q3 pending when we delete it.")
+		ginkgo.By("Q3 pending when we delete it.")
 		err = WaitQueueStatus(ctx, "Pending", 1, q3)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue pending")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue pending")
 	})
 
-	It("Reclaim Case 4: New queue with job created no reclaim when new queue is not created", func() {
+	ginkgo.It("Reclaim Case 4: New queue with job created no reclaim when new queue is not created", func() {
 		q1 := e2eutil.DefaultQueue
 		q2 := "reclaim-q2"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{
@@ -207,31 +207,31 @@ var _ = Describe("Reclaim E2E Test", func() {
 
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("Setup initial jobs")
+		ginkgo.By("Setup initial jobs")
 
 		_, err := CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j1", q1, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job1 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job1 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j2", q2, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job2 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job2 failed")
 
-		By("Create new coming job")
+		ginkgo.By("Create new coming job")
 		q3 := "reclaim-q3"
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j3", q3, "", "", true)
-		Expect(err).Should(HaveOccurred(), "job3 create failed when queue3 is not created")
+		gomega.Expect(err).Should(gomega.HaveOccurred(), "job3 create failed when queue3 is not created")
 
-		By("Make sure all job running")
+		ginkgo.By("Make sure all job running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q2)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 	})
 
 	// As we agreed, this is not intended behavior, actually, it is a bug.
-	It("Reclaim Case 5: New queue with job created no reclaim when job or task is low-priority", func() {
+	ginkgo.It("Reclaim Case 5: New queue with job created no reclaim when job or task is low-priority", func() {
 		q1 := e2eutil.DefaultQueue
 		q2 := "reclaim-q2"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{
@@ -246,33 +246,33 @@ var _ = Describe("Reclaim E2E Test", func() {
 
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("Setup initial jobs")
+		ginkgo.By("Setup initial jobs")
 
 		_, err := CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j1", q1, "high-priority", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job1 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job1 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j2", q2, "high-priority", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job2 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job2 failed")
 
-		By("Create new coming queue and job")
+		ginkgo.By("Create new coming queue and job")
 		q3 := "reclaim-q3"
 
 		err = WaitQueueStatus(ctx, "Open", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue open")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue open")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j3", q3, "low-priority", "", true)
-		Expect(err).Should(HaveOccurred(), "job3 create failed when queue3 is not created")
+		gomega.Expect(err).Should(gomega.HaveOccurred(), "job3 create failed when queue3 is not created")
 
-		By("Make sure all job running")
+		ginkgo.By("Make sure all job running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q2)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 	})
 
-	It("Reclaim Case 6: New queue with job created no reclaim when overused", func() {
+	ginkgo.It("Reclaim Case 6: New queue with job created no reclaim when overused", func() {
 		q1 := e2eutil.DefaultQueue
 		q2 := "reclaim-q2"
 		q3 := "reclaim-q3"
@@ -288,38 +288,38 @@ var _ = Describe("Reclaim E2E Test", func() {
 
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("Setup initial jobs")
+		ginkgo.By("Setup initial jobs")
 
 		_, err := CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j1", q1, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job1 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job1 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j2", q2, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job2 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job2 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j3", q3, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job3 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job3 failed")
 
-		By("Create job4 to testing overused cases.")
+		ginkgo.By("Create job4 to testing overused cases.")
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j4", q3, "", "", false)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job4 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job4 failed")
 
 		time.Sleep(10 * time.Second)
-		By("Make sure all job running")
+		ginkgo.By("Make sure all job running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q2)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q3)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Inqueue", 1, q3)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue Inqueue")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue Inqueue")
 	})
 
-	It("Reclaim Case 7:  New queue with job created no reclaim when job not satisfied with predicates", func() {
+	ginkgo.It("Reclaim Case 7:  New queue with job created no reclaim when job not satisfied with predicates", func() {
 		q1 := e2eutil.DefaultQueue
 		q2 := "reclaim-q2"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{
@@ -330,41 +330,41 @@ var _ = Describe("Reclaim E2E Test", func() {
 
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("Setup initial jobs")
+		ginkgo.By("Setup initial jobs")
 
 		_, err := CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j1", q1, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job1 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job1 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j2", q2, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job2 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job2 failed")
 
-		By("Create new coming queue and job")
+		ginkgo.By("Create new coming queue and job")
 		q3 := "reclaim-q3"
 		ctx.Queues = append(ctx.Queues, q3)
 		e2eutil.CreateQueues(ctx)
 
 		err = WaitQueueStatus(ctx, "Open", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue open")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue open")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j3", q3, "", "fake-node", false)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job3 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job3 failed")
 
 		time.Sleep(10 * time.Second)
-		By("Make sure all job running")
+		ginkgo.By("Make sure all job running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q2)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		// TODO: it is a bug : the job status is pending but podgroup status is running
 		err = WaitQueueStatus(ctx, "Running", 1, q3)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue Running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue Running")
 
 	})
 
-	It("Reclaim Case 8: New queue with job created no reclaim when task resources less than reclaimable resource", func() {
+	ginkgo.It("Reclaim Case 8: New queue with job created no reclaim when task resources less than reclaimable resource", func() {
 		q1 := e2eutil.DefaultQueue
 		q2 := "reclaim-q2"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{
@@ -379,21 +379,21 @@ var _ = Describe("Reclaim E2E Test", func() {
 
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("Setup initial jobs")
+		ginkgo.By("Setup initial jobs")
 
 		_, err := CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j1", q1, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job1 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job1 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j2", q2, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job2 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job2 failed")
 
-		By("Create new coming queue and job")
+		ginkgo.By("Create new coming queue and job")
 		q3 := "reclaim-q3"
 		ctx.Queues = append(ctx.Queues, q3)
 		e2eutil.CreateQueues(ctx)
 
 		err = WaitQueueStatus(ctx, "Open", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue open")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue open")
 
 		job := &e2eutil.JobSpec{
 			Tasks: []e2eutil.TaskSpec{
@@ -410,19 +410,19 @@ var _ = Describe("Reclaim E2E Test", func() {
 		e2eutil.CreateJob(ctx, job)
 
 		time.Sleep(10 * time.Second)
-		By("Make sure all job running")
+		ginkgo.By("Make sure all job running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q2)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Inqueue", 1, q3)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue Inqueue")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue Inqueue")
 	})
 
-	It("Reclaim Case 9:  New queue with job created, all queues.spec.reclaimable is false, no reclaim", func() {
+	ginkgo.It("Reclaim Case 9:  New queue with job created, all queues.spec.reclaimable is false, no reclaim", func() {
 		q1 := e2eutil.DefaultQueue
 		q2 := "reclaim-q2"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{
@@ -433,15 +433,15 @@ var _ = Describe("Reclaim E2E Test", func() {
 
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("Setup initial jobs")
+		ginkgo.By("Setup initial jobs")
 
 		_, err := CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j1", q1, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job1 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job1 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j2", q2, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job2 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job2 failed")
 
-		By("Create new coming queue and job")
+		ginkgo.By("Create new coming queue and job")
 		q3 := "reclaim-q3"
 		ctx.Queues = append(ctx.Queues, q3)
 		e2eutil.CreateQueues(ctx)
@@ -450,26 +450,26 @@ var _ = Describe("Reclaim E2E Test", func() {
 		defer e2eutil.SetQueueReclaimable(ctx, []string{q1}, true)
 
 		err = WaitQueueStatus(ctx, "Open", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue open")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue open")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j3", q3, "", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job3 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job3 failed")
 
-		By("Make sure all job running")
+		ginkgo.By("Make sure all job running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q2)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q3)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 	})
 
 	// Reclaim rely on priority is a bug here.
-	It("Reclaim Case 10: Multi reclaimed queue", func() {
+	ginkgo.It("Reclaim Case 10: Multi reclaimed queue", func() {
 		q1 := e2eutil.DefaultQueue
 		q2 := "reclaim-q2"
 		q3 := "reclaim-q3"
@@ -486,7 +486,7 @@ var _ = Describe("Reclaim E2E Test", func() {
 
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("Setup initial jobs")
+		ginkgo.By("Setup initial jobs")
 
 		spec := &e2eutil.JobSpec{
 			Tasks: []e2eutil.TaskSpec{
@@ -505,50 +505,50 @@ var _ = Describe("Reclaim E2E Test", func() {
 		spec.Pri = "low-priority"
 		job1 := e2eutil.CreateJob(ctx, spec)
 		err := e2eutil.WaitJobReady(ctx, job1)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		spec.Name = "reclaim-j2"
 		spec.Queue = q2
 		spec.Pri = "low-priority"
 		job2 := e2eutil.CreateJob(ctx, spec)
 		err = e2eutil.WaitJobReady(ctx, job2)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = WaitQueueStatus(ctx, "Running", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue1 running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue1 running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q2)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue2 running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue2 running")
 
-		By("Create coming jobs")
+		ginkgo.By("Create coming jobs")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j3", q3, "high-priority", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job3 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job3 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j4", q4, "high-priority", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job4 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job4 failed")
 
-		By("Make sure all job running")
+		ginkgo.By("Make sure all job running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q3)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue3 running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue3 running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q4)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue4 running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue4 running")
 
 	})
 
 	// Reclaim for capacity plugin.
-	It("Capacity Reclaim Case 11: Multi reclaimed queue", func() {
+	ginkgo.It("Capacity Reclaim Case 11: Multi reclaimed queue", func() {
 		// First replace proportion with capacity plugin.
 		cmc := e2eutil.NewConfigMapCase("volcano-system", "integration-scheduler-configmap")
 		cmc.ChangeBy(func(data map[string]string) (changed bool, changedBefore map[string]string) {
 			vcScheConfStr, ok := data["volcano-scheduler-ci.conf"]
-			Expect(ok).To(BeTrue())
+			gomega.Expect(ok).To(gomega.BeTrue())
 
 			schedulerConf := &e2eutil.SchedulerConfiguration{}
 			err := yaml.Unmarshal([]byte(vcScheConfStr), schedulerConf)
-			Expect(err).NotTo(HaveOccurred())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			for _, tier := range schedulerConf.Tiers {
 				for i, plugin := range tier.Plugins {
 					if plugin.Name == "proportion" {
@@ -559,7 +559,7 @@ var _ = Describe("Reclaim E2E Test", func() {
 			}
 
 			newVCScheConfBytes, err := yaml.Marshal(schedulerConf)
-			Expect(err).NotTo(HaveOccurred())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 			changed = true
 			changedBefore = make(map[string]string)
@@ -591,7 +591,7 @@ var _ = Describe("Reclaim E2E Test", func() {
 
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("Setup initial jobs")
+		ginkgo.By("Setup initial jobs")
 
 		spec := &e2eutil.JobSpec{
 			Tasks: []e2eutil.TaskSpec{
@@ -610,47 +610,47 @@ var _ = Describe("Reclaim E2E Test", func() {
 		spec.Pri = "low-priority"
 		job1 := e2eutil.CreateJob(ctx, spec)
 		err := e2eutil.WaitJobReady(ctx, job1)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		spec.Name = "reclaim-j2"
 		spec.Queue = q2
 		spec.Pri = "low-priority"
 		job2 := e2eutil.CreateJob(ctx, spec)
 		err = e2eutil.WaitJobReady(ctx, job2)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = WaitQueueStatus(ctx, "Running", 1, q1)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue1 running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue1 running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q2)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue2 running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue2 running")
 
-		By("Create coming jobs")
+		ginkgo.By("Create coming jobs")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU2Mem2, "reclaim-j3", q3, "high-priority", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job3 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job3 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU2Mem2, "reclaim-j4", q4, "high-priority", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job4 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job4 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j5", q4, "high-priority", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job5 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job5 failed")
 
 		_, err = CreateReclaimJob(ctx, e2eutil.CPU1Mem1, "reclaim-j6", q4, "high-priority", "", true)
-		Expect(err).NotTo(HaveOccurred(), "Wait for job6 failed")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for job6 failed")
 
-		By("Make sure all job running")
+		ginkgo.By("Make sure all job running")
 
 		err = WaitQueueStatus(ctx, "Running", 1, q3)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue3 running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue3 running")
 
 		err = WaitQueueStatus(ctx, "Running", 3, q4)
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue4 running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue4 running")
 
 	})
 
-	It("Reclaim", func() {
-		Skip("skip: the case has some problem")
+	ginkgo.It("Reclaim", func() {
+		ginkgo.Skip("skip: the case has some problem")
 		q1, q2 := "reclaim-q1", "reclaim-q2"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{
 			Queues: []string{q1, q2},
@@ -681,14 +681,14 @@ var _ = Describe("Reclaim E2E Test", func() {
 		spec.Pri = "low-priority"
 		job1 := e2eutil.CreateJob(ctx, spec)
 		err := e2eutil.WaitJobReady(ctx, job1)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
-		err = e2eutil.WaitQueueStatus(func() (bool, error) {
+		err = e2eutil.WaitQueueStatus(func(_ context.Context) (bool, error) {
 			queue, err := ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), q1, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			return queue.Status.Running == 1, nil
 		})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		expected := int(rep) / 2
 		// Reduce one pod to tolerate decimal fraction.
@@ -696,7 +696,7 @@ var _ = Describe("Reclaim E2E Test", func() {
 			expected--
 		} else {
 			err := fmt.Errorf("expected replica <%d> is too small", expected)
-			Expect(err).NotTo(HaveOccurred())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		}
 
 		spec.Name = "q2-qj-2"
@@ -704,10 +704,10 @@ var _ = Describe("Reclaim E2E Test", func() {
 		spec.Pri = "high-priority"
 		job2 := e2eutil.CreateJob(ctx, spec)
 		err = e2eutil.WaitTasksReady(ctx, job2, expected)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		err = e2eutil.WaitTasksReady(ctx, job1, expected)
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 
 		// Test Queue status
 		spec = &e2eutil.JobSpec{
@@ -724,12 +724,12 @@ var _ = Describe("Reclaim E2E Test", func() {
 		}
 		job3 := e2eutil.CreateJob(ctx, spec)
 		err = e2eutil.WaitJobStatePending(ctx, job3)
-		Expect(err).NotTo(HaveOccurred())
-		err = e2eutil.WaitQueueStatus(func() (bool, error) {
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
+		err = e2eutil.WaitQueueStatus(func(_ context.Context) (bool, error) {
 			queue, err := ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), q1, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 			return queue.Status.Pending == 1, nil
 		})
-		Expect(err).NotTo(HaveOccurred())
+		gomega.Expect(err).NotTo(gomega.HaveOccurred())
 	})
 })

@@ -20,7 +20,7 @@ import (
 	"context"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	appv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	v1 "k8s.io/api/core/v1"
@@ -72,18 +72,18 @@ func CreateDeploymentGated(ctx *TestContext, name string, rep int32, img string,
 	}
 
 	deployment, err := ctx.Kubeclient.AppsV1().Deployments(ctx.Namespace).Create(context.TODO(), d, metav1.CreateOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to create deployment %s", name)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create deployment %s", name)
 
 	return deployment
 }
 
-func deploymentReady(ctx *TestContext, name string) wait.ConditionFunc {
-	return func() (bool, error) {
+func deploymentReady(ctx *TestContext, name string) wait.ConditionWithContextFunc {
+	return func(_ context.Context) (bool, error) {
 		deployment, err := ctx.Kubeclient.AppsV1().Deployments(ctx.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to get deployment %s in namespace %s", name, ctx.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to get deployment %s in namespace %s", name, ctx.Namespace)
 
 		pods, err := ctx.Kubeclient.CoreV1().Pods(ctx.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list pods in namespace %s", ctx.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods in namespace %s", ctx.Namespace)
 
 		labelSelector := labels.SelectorFromSet(deployment.Spec.Selector.MatchLabels)
 
@@ -105,7 +105,7 @@ func deploymentReady(ctx *TestContext, name string) wait.ConditionFunc {
 }
 
 func WaitDeploymentReady(ctx *TestContext, name string) error {
-	return wait.Poll(100*time.Millisecond, FiveMinute, deploymentReady(ctx, name))
+	return wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, deploymentReady(ctx, name))
 }
 
 func DeleteDeployment(ctx *TestContext, name string) error {
@@ -154,18 +154,18 @@ func CreateSampleK8sJob(ctx *TestContext, name string, img string, req v1.Resour
 	}
 
 	jb, err := ctx.Kubeclient.BatchV1().Jobs(ctx.Namespace).Create(context.TODO(), j, metav1.CreateOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to create k8sjob %s", name)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create k8sjob %s", name)
 
 	return jb
 }
 
-func k8sjobCompleted(ctx *TestContext, name string) wait.ConditionFunc {
-	return func() (bool, error) {
+func k8sjobCompleted(ctx *TestContext, name string) wait.ConditionWithContextFunc {
+	return func(_ context.Context) (bool, error) {
 		jb, err := ctx.Kubeclient.BatchV1().Jobs(ctx.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to get k8sjob %s in namespace %s", name, ctx.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to get k8sjob %s in namespace %s", name, ctx.Namespace)
 
 		pods, err := ctx.Kubeclient.CoreV1().Pods(ctx.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list pods in namespace %s", ctx.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods in namespace %s", ctx.Namespace)
 
 		labelSelector := labels.SelectorFromSet(jb.Spec.Selector.MatchLabels)
 
@@ -183,7 +183,7 @@ func k8sjobCompleted(ctx *TestContext, name string) wait.ConditionFunc {
 }
 
 func Waitk8sJobCompleted(ctx *TestContext, name string) error {
-	return wait.Poll(100*time.Millisecond, FiveMinute, k8sjobCompleted(ctx, name))
+	return wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, k8sjobCompleted(ctx, name))
 }
 
 func DeleteK8sJob(ctx *TestContext, name string) error {

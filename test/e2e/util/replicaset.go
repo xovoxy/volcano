@@ -20,7 +20,7 @@ import (
 	"context"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	appv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,18 +65,18 @@ func CreateReplicaSet(ctx *TestContext, name string, rep int32, img string, req 
 	}
 
 	deployment, err := ctx.Kubeclient.AppsV1().ReplicaSets(ctx.Namespace).Create(context.TODO(), deployment, metav1.CreateOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to create replica sets %s", name)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create replica sets %s", name)
 
 	return deployment
 }
 
-func replicaSetReady(ctx *TestContext, name string) wait.ConditionFunc {
-	return func() (bool, error) {
+func replicaSetReady(ctx *TestContext, name string) wait.ConditionWithContextFunc {
+	return func(_ context.Context) (bool, error) {
 		deployment, err := ctx.Kubeclient.AppsV1().ReplicaSets(ctx.Namespace).Get(context.TODO(), name, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to get replica set %s in namespace %s", name, ctx.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to get replica set %s in namespace %s", name, ctx.Namespace)
 
 		pods, err := ctx.Kubeclient.CoreV1().Pods(ctx.Namespace).List(context.TODO(), metav1.ListOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to list pods in namespace %s", ctx.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods in namespace %s", ctx.Namespace)
 
 		labelSelector := labels.SelectorFromSet(deployment.Spec.Selector.MatchLabels)
 
@@ -95,7 +95,7 @@ func replicaSetReady(ctx *TestContext, name string) wait.ConditionFunc {
 }
 
 func WaitReplicaSetReady(ctx *TestContext, name string) error {
-	return wait.Poll(100*time.Millisecond, FiveMinute, replicaSetReady(ctx, name))
+	return wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, replicaSetReady(ctx, name))
 }
 
 func DeleteReplicaSet(ctx *TestContext, name string) error {

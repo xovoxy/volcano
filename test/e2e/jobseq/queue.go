@@ -18,8 +18,9 @@ package jobseq
 
 import (
 	"context"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	busv1alpha1 "volcano.sh/apis/pkg/apis/bus/v1alpha1"
@@ -29,8 +30,8 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Queue E2E Test", func() {
-	It("Queue Command Close And Open With State Check", func() {
+var _ = ginkgo.Describe("Queue E2E Test", func() {
+	ginkgo.It("Queue Command Close And Open With State Check", func() {
 		q1 := "queue-command-close"
 		defaultQueue := "default"
 		ctx := e2eutil.InitTestContext(e2eutil.Options{
@@ -38,31 +39,31 @@ var _ = Describe("Queue E2E Test", func() {
 		})
 		defer e2eutil.CleanupTestContext(ctx)
 
-		By("Close queue command check")
+		ginkgo.By("Close queue command check")
 		err := util.CreateQueueCommand(ctx.Vcclient, defaultQueue, q1, busv1alpha1.CloseQueueAction)
 		if err != nil {
-			Expect(err).NotTo(HaveOccurred(), "Error send close queue command")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error send close queue command")
 		}
 
-		err = e2eutil.WaitQueueStatus(func() (bool, error) {
+		err = e2eutil.WaitQueueStatus(func(_ context.Context) (bool, error) {
 			queue, err := ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), q1, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Get queue %s failed", q1)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Get queue %s failed", q1)
 			return queue.Status.State == schedulingv1beta1.QueueStateClosed, nil
 		})
-		Expect(err).NotTo(HaveOccurred(), "Wait for closed queue %s failed", q1)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for closed queue %s failed", q1)
 
-		By("Open queue command check")
+		ginkgo.By("Open queue command check")
 		err = util.CreateQueueCommand(ctx.Vcclient, defaultQueue, q1, busv1alpha1.OpenQueueAction)
 		if err != nil {
-			Expect(err).NotTo(HaveOccurred(), "Error send open queue command")
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error send open queue command")
 		}
 
-		err = e2eutil.WaitQueueStatus(func() (bool, error) {
+		err = e2eutil.WaitQueueStatus(func(_ context.Context) (bool, error) {
 			queue, err := ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), q1, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Get queue %s failed", q1)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Get queue %s failed", q1)
 			return queue.Status.State == schedulingv1beta1.QueueStateOpen, nil
 		})
-		Expect(err).NotTo(HaveOccurred(), "Wait for reopen queue %s failed", q1)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Wait for reopen queue %s failed", q1)
 
 	})
 })

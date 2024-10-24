@@ -70,7 +70,7 @@ func (c *ConfigMapCase) UndoChanged() error {
 		c.ocm.Data[filename] = old
 	}
 	atLeast := time.Second // at least 1s wait between 2 configmap-change
-	if dur := time.Now().Sub(c.startTs); dur < atLeast {
+	if dur := time.Since(c.startTs); dur < atLeast {
 		time.Sleep(atLeast - dur)
 	}
 	cm, err := KubeClient.CoreV1().ConfigMaps(c.NameSpace).Update(context.TODO(), c.ocm, metav1.UpdateOptions{})

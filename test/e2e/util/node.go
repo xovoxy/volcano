@@ -21,7 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,10 +33,10 @@ import (
 
 func ClusterSize(ctx *TestContext, req v1.ResourceList) int32 {
 	nodes, err := ctx.Kubeclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to list nodes")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list nodes")
 
 	pods, err := ctx.Kubeclient.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to list pods")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods")
 
 	used := map[string]*schedulerapi.Resource{}
 
@@ -81,7 +81,7 @@ func ClusterSize(ctx *TestContext, req v1.ResourceList) int32 {
 			res++
 		}
 	}
-	Expect(res).Should(BeNumerically(">=", 1),
+	gomega.Expect(res).Should(gomega.BeNumerically(">=", 1),
 		"Current cluster does not have enough resource for request")
 	return res
 }
@@ -89,7 +89,7 @@ func ClusterSize(ctx *TestContext, req v1.ResourceList) int32 {
 // ClusterNodeNumber returns the number of untainted nodes
 func ClusterNodeNumber(ctx *TestContext) int {
 	nodes, err := ctx.Kubeclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to list nodes")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list nodes")
 
 	nn := 0
 	for _, node := range nodes.Items {
@@ -104,10 +104,10 @@ func ClusterNodeNumber(ctx *TestContext) int {
 
 func ComputeNode(ctx *TestContext, req v1.ResourceList) (string, int32) {
 	nodes, err := ctx.Kubeclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to list nodes")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list nodes")
 
 	pods, err := ctx.Kubeclient.CoreV1().Pods(metav1.NamespaceAll).List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to list pods")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list pods")
 
 	used := map[string]*schedulerapi.Resource{}
 
@@ -162,7 +162,7 @@ func ComputeNode(ctx *TestContext, req v1.ResourceList) (string, int32) {
 // TaintAllNodes taints all nodes in the cluster
 func TaintAllNodes(ctx *TestContext, taints []v1.Taint) error {
 	nodes, err := ctx.Kubeclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to list nodes")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list nodes")
 
 	for _, node := range nodes.Items {
 		newNode := node.DeepCopy()
@@ -185,10 +185,10 @@ func TaintAllNodes(ctx *TestContext, taints []v1.Taint) error {
 		newNode.Spec.Taints = newTaints
 
 		patchBytes, err := preparePatchBytesforNode(node.Name, &node, newNode)
-		Expect(err).NotTo(HaveOccurred(), "failed to prepare patch bytes for node %s", node.Name)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to prepare patch bytes for node %s", node.Name)
 
 		_, err = ctx.Kubeclient.CoreV1().Nodes().Patch(context.TODO(), node.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to taint node %s", node.Name)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to taint node %s", node.Name)
 	}
 
 	return nil
@@ -196,7 +196,7 @@ func TaintAllNodes(ctx *TestContext, taints []v1.Taint) error {
 
 func RemoveTaintsFromAllNodes(ctx *TestContext, taints []v1.Taint) error {
 	nodes, err := ctx.Kubeclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to list nodes")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list nodes")
 
 	for _, node := range nodes.Items {
 		if len(node.Spec.Taints) == 0 {
@@ -222,10 +222,10 @@ func RemoveTaintsFromAllNodes(ctx *TestContext, taints []v1.Taint) error {
 		newNode.Spec.Taints = newTaints
 
 		patchBytes, err := preparePatchBytesforNode(node.Name, &node, newNode)
-		Expect(err).NotTo(HaveOccurred(), "failed to prepare patch bytes for node %s", node.Name)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to prepare patch bytes for node %s", node.Name)
 
 		_, err = ctx.Kubeclient.CoreV1().Nodes().Patch(context.TODO(), node.Name, types.StrategicMergePatchType, patchBytes, metav1.PatchOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to remove taints from node %s", node.Name)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to remove taints from node %s", node.Name)
 	}
 
 	return nil
@@ -262,7 +262,7 @@ func preparePatchBytesforNode(nodeName string, oldNode *v1.Node, newNode *v1.Nod
 
 func satisfyMinNodesRequirements(ctx *TestContext, num int) bool {
 	nodes, err := ctx.Kubeclient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to list nodes")
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to list nodes")
 
 	taintedNodes := 0
 	for _, node := range nodes.Items {

@@ -22,8 +22,8 @@ import (
 	"strconv"
 	"time"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
+	"github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -35,15 +35,15 @@ import (
 	e2eutil "volcano.sh/volcano/test/e2e/util"
 )
 
-var _ = Describe("Queue Job Status Transition", func() {
+var _ = ginkgo.Describe("Queue Job Status Transition", func() {
 
 	var ctx *e2eutil.TestContext
-	AfterEach(func() {
+	ginkgo.AfterEach(func() {
 		e2eutil.CleanupTestContext(ctx)
 	})
 
-	It("Transform from inqueque to running should succeed", func() {
-		By("Prepare 2 job")
+	ginkgo.It("Transform from inqueque to running should succeed", func() {
+		ginkgo.By("Prepare 2 job")
 		var q1 string
 		var rep int32
 		q1 = "queue-jobs-status-transition"
@@ -55,7 +55,7 @@ var _ = Describe("Queue Job Status Transition", func() {
 
 		if rep < 4 {
 			err := fmt.Errorf("You need at least 2 logical cpu for this test case, please skip 'Queue Job Status Transition' when you see this message")
-			Expect(err).NotTo(HaveOccurred())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		}
 
 		for i := 0; i < 2; i++ {
@@ -75,25 +75,25 @@ var _ = Describe("Queue Job Status Transition", func() {
 			e2eutil.CreateJob(ctx, spec)
 		}
 
-		By("Verify queue have pod groups inqueue")
-		err := e2eutil.WaitQueueStatus(func() (bool, error) {
+		ginkgo.By("Verify queue have pod groups inqueue")
+		err := e2eutil.WaitQueueStatus(func(_ context.Context) (bool, error) {
 			queue, err := ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), q1, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Get queue %s failed", q1)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Get queue %s failed", q1)
 			return queue.Status.Inqueue > 0, nil
 		})
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue inqueue")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue inqueue")
 
-		By("Verify queue have pod groups running")
-		err = e2eutil.WaitQueueStatus(func() (bool, error) {
+		ginkgo.By("Verify queue have pod groups running")
+		err = e2eutil.WaitQueueStatus(func(_ context.Context) (bool, error) {
 			queue, err := ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), q1, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Get queue %s failed", q1)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Get queue %s failed", q1)
 			return queue.Status.Running > 0, nil
 		})
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 	})
 
-	It("Transform from running to pending should succeed", func() {
-		By("Prepare 2 job")
+	ginkgo.It("Transform from running to pending should succeed", func() {
+		ginkgo.By("Prepare 2 job")
 		var q1 string
 		var podNamespace string
 		var rep int32
@@ -109,7 +109,7 @@ var _ = Describe("Queue Job Status Transition", func() {
 
 		if rep < 4 {
 			err := fmt.Errorf("You need at least 2 logical cpu for this test case, please skip 'Queue Job Status Transition' when you see this message")
-			Expect(err).NotTo(HaveOccurred())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		}
 
 		for i := 0; i < 2; i++ {
@@ -132,33 +132,33 @@ var _ = Describe("Queue Job Status Transition", func() {
 			e2eutil.CreateJob(ctx, spec)
 		}
 
-		By("Verify queue have pod groups running")
-		err := e2eutil.WaitQueueStatus(func() (bool, error) {
+		ginkgo.By("Verify queue have pod groups running")
+		err := e2eutil.WaitQueueStatus(func(_ context.Context) (bool, error) {
 			queue, err := ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), q1, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Get queue %s failed", q1)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Get queue %s failed", q1)
 			return queue.Status.Running > 0, nil
 		})
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
 		clusterPods, err := ctx.Kubeclient.CoreV1().Pods(podNamespace).List(context.TODO(), metav1.ListOptions{})
 		for _, pod := range clusterPods.Items {
 			if pod.Labels["volcano.sh/job-name"] == firstJobName {
 				err = ctx.Kubeclient.CoreV1().Pods(podNamespace).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{})
-				Expect(err).NotTo(HaveOccurred(), "Failed to delete pod %s", pod.Name)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Failed to delete pod %s", pod.Name)
 			}
 		}
 
-		By("Verify queue have pod groups Pending")
-		err = e2eutil.WaitQueueStatus(func() (bool, error) {
+		ginkgo.By("Verify queue have pod groups Pending")
+		err = e2eutil.WaitQueueStatus(func(_ context.Context) (bool, error) {
 			queue, err := ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), q1, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Get queue %s failed", q1)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Get queue %s failed", q1)
 			return queue.Status.Pending > 0, nil
 		})
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue Pending")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue Pending")
 	})
 
-	It("Transform from running to unknown should succeed", func() {
-		By("Prepare 2 job")
+	ginkgo.It("Transform from running to unknown should succeed", func() {
+		ginkgo.By("Prepare 2 job")
 		var q1 string
 		var podNamespace string
 		var rep int32
@@ -173,7 +173,7 @@ var _ = Describe("Queue Job Status Transition", func() {
 
 		if rep < 4 {
 			err := fmt.Errorf("You need at least 2 logical cpu for this test case, please skip 'Queue Job Status Transition' when you see this message")
-			Expect(err).NotTo(HaveOccurred())
+			gomega.Expect(err).NotTo(gomega.HaveOccurred())
 		}
 
 		for i := 0; i < 2; i++ {
@@ -193,25 +193,25 @@ var _ = Describe("Queue Job Status Transition", func() {
 			e2eutil.CreateJob(ctx, spec)
 		}
 
-		By("Verify queue have pod groups running")
-		err := e2eutil.WaitQueueStatus(func() (bool, error) {
+		ginkgo.By("Verify queue have pod groups running")
+		err := e2eutil.WaitQueueStatus(func(_ context.Context) (bool, error) {
 			queue, err := ctx.Vcclient.SchedulingV1beta1().Queues().Get(context.TODO(), q1, metav1.GetOptions{})
-			Expect(err).NotTo(HaveOccurred(), "Get queue %s failed", q1)
+			gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Get queue %s failed", q1)
 			return queue.Status.Running > 0, nil
 		})
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue running")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue running")
 
-		By("Delete some of pod which will case pod group status transform from running to unknown.")
+		ginkgo.By("Delete some of pod which will case pod group status transform from running to unknown.")
 		podDeleteNum := 0
 
 		err = e2eutil.WaitPodPhaseRunningMoreThanNum(ctx, podNamespace, 2)
-		Expect(err).NotTo(HaveOccurred(), "Failed waiting for pods")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Failed waiting for pods")
 
 		clusterPods, err := ctx.Kubeclient.CoreV1().Pods(podNamespace).List(context.TODO(), metav1.ListOptions{})
 		for _, pod := range clusterPods.Items {
 			if pod.Status.Phase == corev1.PodRunning {
 				err = ctx.Kubeclient.CoreV1().Pods(podNamespace).Delete(context.TODO(), pod.Name, metav1.DeleteOptions{})
-				Expect(err).NotTo(HaveOccurred(), "Failed to delete pod %s", pod.Name)
+				gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Failed to delete pod %s", pod.Name)
 				podDeleteNum = podDeleteNum + 1
 			}
 			if podDeleteNum >= int(rep/2) {
@@ -219,7 +219,7 @@ var _ = Describe("Queue Job Status Transition", func() {
 			}
 		}
 
-		By("Verify queue have pod groups unknown")
+		ginkgo.By("Verify queue have pod groups unknown")
 		fieldSelector := fields.OneTermEqualSelector("metadata.name", q1).String()
 		w := &cache.ListWatch{
 			WatchFunc: func(options metav1.ListOptions) (i watch.Interface, e error) {
@@ -240,6 +240,6 @@ var _ = Describe("Queue Job Status Transition", func() {
 			return false, nil
 		})
 
-		Expect(err).NotTo(HaveOccurred(), "Error waiting for queue unknown")
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "Error waiting for queue unknown")
 	})
 })

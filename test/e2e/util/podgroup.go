@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -41,24 +41,24 @@ func CreatePodGroup(ctx *TestContext, pg string, namespace string) *schedulingv1
 			MinResources: &v1.ResourceList{},
 		},
 	}, metav1.CreateOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to create pod group %s", pg)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to create pod group %s", pg)
 	return podGroup
 }
 
 // DeletePodGroup deletes a PodGroup with the specified name in the namespace
 func DeletePodGroup(ctx *TestContext, pg string, namespace string) {
 	_, err := ctx.Vcclient.SchedulingV1beta1().PodGroups(namespace).Get(context.TODO(), pg, metav1.GetOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to get pod group %s", pg)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to get pod group %s", pg)
 	err = ctx.Vcclient.SchedulingV1beta1().PodGroups(namespace).Delete(context.TODO(), pg, metav1.DeleteOptions{})
-	Expect(err).NotTo(HaveOccurred(), "failed to delete pod group %s", pg)
+	gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to delete pod group %s", pg)
 }
 
 // WaitPodGroupPhase waits for the PodGroup to be the specified state
 func WaitPodGroupPhase(ctx *TestContext, podGroup *schedulingv1beta1.PodGroup, state schedulingv1beta1.PodGroupPhase) error {
 	var additionalError error
-	err := wait.Poll(100*time.Millisecond, FiveMinute, func() (bool, error) {
+	err := wait.PollUntilContextTimeout(context.Background(), 100*time.Millisecond, FiveMinute, true, func(_ context.Context) (bool, error) {
 		podGroup, err := ctx.Vcclient.SchedulingV1beta1().PodGroups(podGroup.Namespace).Get(context.TODO(), podGroup.Name, metav1.GetOptions{})
-		Expect(err).NotTo(HaveOccurred(), "failed to get pod group %s in namespace %s", podGroup.Name, podGroup.Namespace)
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), "failed to get pod group %s in namespace %s", podGroup.Name, podGroup.Namespace)
 		expected := podGroup.Status.Phase == state
 		if !expected {
 			additionalError = fmt.Errorf("expected podGroup '%s' phase in %s, actual got %s", podGroup.Name,
